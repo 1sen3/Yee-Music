@@ -162,10 +162,19 @@
                                                 Icon="Play" 
                                                 Command="{Binding DataContext.PlayMusicCommand, ElementName=FavoriteSongsListView}" 
                                                 CommandParameter="{Binding}"/>
-                                <MenuFlyoutItem Text="从喜欢列表中移除" 
-                                                Icon="UnFavorite" 
+                                <MenuFlyoutItem Text="从喜欢中移除"
                                                 Command="{Binding DataContext.RemoveFavoriteCommand, ElementName=FavoriteSongsListView}" 
-                                                CommandParameter="{Binding}"/>
+                                                CommandParameter="{Binding}">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xEA92;"/>
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutSeparator/>
+                                <MenuFlyoutItem Text="属性" Click="MusicProperties_Click" Tag="{Binding}">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE946;"/>
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
                             </MenuFlyout>
                         </Grid.ContextFlyout>
                     </Grid>

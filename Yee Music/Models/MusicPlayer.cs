@@ -233,7 +233,6 @@ namespace Yee_Music.Models
                     {
                         var position = _mediaPlayer.PlaybackSession.Position;
                         PositionChanged?.Invoke(position);
-                        Debug.WriteLine($"定时器更新位置: {position}");
                     }
                 }
                 catch (Exception ex)
@@ -251,12 +250,10 @@ namespace Yee_Music.Models
                 if (_isPlaying)
                 {
                     _positionTimer.Start();
-                    Debug.WriteLine("播放开始，启动定时器");
                 }
                 else
                 {
                     _positionTimer.Stop();
-                    Debug.WriteLine("播放停止，停止定时器");
                 }
             };
             // 尝试加载上次播放的音乐

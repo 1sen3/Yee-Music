@@ -28,6 +28,11 @@
                                 <FontIcon Glyph="&#xE711;"/>
                             </MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
+                        <MenuFlyoutItem Text="属性" Click="MusicProperties_Click" Tag="{Binding}">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="&#xE946;"/>
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
                     </MenuFlyout>
                 </Grid.ContextFlyout>
                 <!-- 其余DataTemplate内容保持不变 -->

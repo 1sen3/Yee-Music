@@ -17,6 +17,7 @@ using Yee_Music.Models;
 using Yee_Music.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Yee_Music.ViewModels;
+using Yee_Music.Controls;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -82,6 +83,17 @@ namespace Yee_Music.Pages
             if (e.ClickedItem is MusicInfo music)
             {
                 ViewModel.PlayMusicCommand.Execute(music);
+            }
+        }
+        private async void MusicProperties_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is MusicInfo music)
+            {
+                var dialog = new MusicPropertiesDialog();
+                dialog.SetMusic(music);
+                dialog.XamlRoot = this.XamlRoot;
+
+                await dialog.ShowAsync();
             }
         }
     }

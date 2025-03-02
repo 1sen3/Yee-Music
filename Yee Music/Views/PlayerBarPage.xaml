@@ -27,7 +27,7 @@
             <Button x:Name="PlayBar_MusicButton"
             Width="50"
             Height="50"
-            CornerRadius="5"
+            CornerRadius="8"
             Padding="0">
                 <Image x:Name="ControllerCover"
                Width="50"

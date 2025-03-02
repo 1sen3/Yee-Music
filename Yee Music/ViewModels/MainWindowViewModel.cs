@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.Threading.Tasks;
 using Windows.Storage.Pickers;
 using Windows.UI.Text;
@@ -118,7 +119,7 @@ namespace Yee_Music.ViewModels
                     {
                         Text = "Yee Music",
                         FontSize = 24,
-                        FontWeight = FontWeights.Black,
+                        FontWeight = FontWeights.ExtraBold,
                         HorizontalAlignment = HorizontalAlignment.Center,
                         Margin = new Thickness(0, 10, 0, 10)
                     };
@@ -138,8 +139,8 @@ namespace Yee_Music.ViewModels
                         Text = "开始设置第一个音乐库吧！",
                         TextWrapping = TextWrapping.Wrap,
                         TextAlignment = TextAlignment.Center,
-                        FontWeight=FontWeights.SemiBold,
-                        FontSize = 20
+                        FontWeight=FontWeights.Medium,
+                        FontSize = 16
                     };
 
                     welcomePage.Children.Add(welcomeIcon);
@@ -171,7 +172,7 @@ namespace Yee_Music.ViewModels
                     {
                         Text = "设置您的音乐库",
                         FontSize = 24,
-                        FontWeight = FontWeights.Black,
+                        FontWeight = FontWeights.ExtraBold,
                         HorizontalAlignment = HorizontalAlignment.Center,
                         Margin = new Thickness(0, 10, 0, 10)
                     };
@@ -268,7 +269,7 @@ namespace Yee_Music.ViewModels
 
                     var finishTitle = new TextBlock
                     {
-                        Text = "准备就绪！",
+                        Text = "准备就绪",
                         FontSize = 24,
                         FontWeight = FontWeights.Black,
                         HorizontalAlignment = HorizontalAlignment.Center,
@@ -290,8 +291,8 @@ namespace Yee_Music.ViewModels
                         Text = "您随时可以在设置中添加或移除音乐库。",
                         TextWrapping = TextWrapping.Wrap,
                         TextAlignment = TextAlignment.Center,
-                        FontSize = 20,
-                        FontWeight=FontWeights.SemiBold
+                        FontSize = 16,
+                        FontWeight=FontWeights.Medium
                     };
 
                     finishPage.Children.Add(finishIcon);

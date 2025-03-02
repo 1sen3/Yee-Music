@@ -137,6 +137,19 @@
                           TextTrimming="CharacterEllipsis"
                           Text="{Binding Duration, Converter={StaticResource DurationConverter}}"
                           Grid.Column="4"/>
+                        <!-- 添加右键菜单 -->
+                        <Grid.ContextFlyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Text="播放" Icon="Play" Command="{Binding DataContext.PlayCommand, ElementName=LibrarySongsListView}" CommandParameter="{Binding}"/>
+                                <MenuFlyoutItem Text="添加到播放列表" Icon="Add"/>
+                                <MenuFlyoutSeparator/>
+                                <MenuFlyoutItem Text="属性" Click="MusicProperties_Click" Tag="{Binding}">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE946;"/>
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Grid.ContextFlyout>
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>

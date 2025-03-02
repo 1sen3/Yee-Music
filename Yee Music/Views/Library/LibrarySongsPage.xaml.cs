@@ -17,6 +17,7 @@ using TagLib.Riff;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using WinRT;
+using Yee_Music.Controls;
 using Yee_Music.Models;
 using Yee_Music.ViewModels;
 
@@ -60,6 +61,17 @@ namespace Yee_Music.Pages
             if (playButton != null)
             {
                 playButton.Visibility = Visibility.Collapsed;
+            }
+        }
+        private async void MusicProperties_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is MusicInfo music)
+            {
+                var dialog = new MusicPropertiesDialog();
+                dialog.SetMusic(music);
+                dialog.XamlRoot = this.XamlRoot;
+
+                await dialog.ShowAsync();
             }
         }
     }

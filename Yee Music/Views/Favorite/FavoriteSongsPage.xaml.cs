@@ -14,6 +14,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using Yee_Music.ViewModels;
 using Yee_Music.Models;
+using Yee_Music.Controls;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -82,6 +83,17 @@ namespace Yee_Music.Pages
                 {
                     removeButton.Visibility = Visibility.Collapsed;
                 }
+            }
+        }
+        private async void MusicProperties_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is MusicInfo music)
+            {
+                var dialog = new MusicPropertiesDialog();
+                dialog.SetMusic(music);
+                dialog.XamlRoot = this.XamlRoot;
+
+                await dialog.ShowAsync();
             }
         }
     }

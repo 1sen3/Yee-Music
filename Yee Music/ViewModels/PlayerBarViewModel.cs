@@ -301,8 +301,6 @@ namespace Yee_Music.ViewModels
                 // 确保属性变更通知被触发
                 OnPropertyChanged(nameof(Progress));
                 OnPropertyChanged(nameof(CurrentTimeText));
-
-                Debug.WriteLine($"进度更新: {position}, Progress={Progress}");
             }
             catch (Exception ex)
             {
