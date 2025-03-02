@@ -38,7 +38,6 @@
     <None Remove="Views\SettingsPage.xaml" />
     <None Remove="Views\ShellPage.xaml" />
     <None Remove="Views\Tips.xaml" />
-    <None Remove="WelcomeWindow.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -139,11 +138,6 @@
     <Folder Include="Views\Library\" />
   </ItemGroup>
   <ItemGroup>
-    <Page Update="WelcomeWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-  <ItemGroup>
     <Page Update="Pages\FavoritePage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -171,6 +165,15 @@
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
     <DefaultLanguage>zh-CN</DefaultLanguage>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+    <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
+    <PackageCertificateKeyFile>Yee Music_TemporaryKey.pfx</PackageCertificateKeyFile>
+    <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
+    <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
+    <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
+    <GenerateTestArtifacts>True</GenerateTestArtifacts>
+    <AppxBundle>Never</AppxBundle>
+    <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
   </PropertyGroup>
   <ItemGroup>
     <PRIResource Remove="新文件夹1\**" />
