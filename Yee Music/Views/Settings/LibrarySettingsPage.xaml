@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Yee_Music.Pages.LibrarySettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Yee_Music.Pages"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="using:CommunityToolkit.WinUI"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    mc:Ignorable="d">
+
+    <Grid Padding="36">
+        <StackPanel Spacing="24">
+            <StackPanel Spacing="16" HorizontalAlignment="Stretch">
+                <!-- 音乐库设置卡片 -->
+                <controls:SettingsExpander Header="音乐库位置"
+                                          Description="管理您的音乐库文件夹"
+                                          ItemsSource="{x:Bind ViewModel.MusicLibraryPaths, Mode=OneWay}">
+                    <controls:SettingsExpander.HeaderIcon>
+                        <FontIcon Glyph="&#xE8B7;"/>
+                    </controls:SettingsExpander.HeaderIcon>
+
+                    <!-- 添加音乐库按钮 -->
+                    <Button x:Name="AddMusicLibraryButton"
+                            Command="{x:Bind ViewModel.AddMusicLibraryCommand}"
+                            Click="AddMusicLibrary_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="16" Glyph="&#xE8F4;"/>
+                            <TextBlock Text="添加音乐库"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- 音乐库路径项模板 -->
+                    <controls:SettingsExpander.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <controls:SettingsCard Header="{x:Bind}">
+                                <Button Width="30" Height="30"
+                                        Margin="0" Padding="0"
+                                        Click="RemoveMusicLibraryButton_Click"
+                                        Tag="{x:Bind}">
+                                    <FontIcon Glyph="&#xE711;"
+                                              FontSize="16"/>
+                                </Button>
+                            </controls:SettingsCard>
+                        </DataTemplate>
+                    </controls:SettingsExpander.ItemTemplate>
+
+                    <!-- 当没有音乐库时显示的提示 -->
+                    <controls:SettingsExpander.ItemsFooter>
+                        <Grid Height="35" Visibility="{x:Bind ViewModel.IsEmptyLibrary, Mode=OneWay}">
+                            <controls:SettingsCard
+                                                  ContentAlignment="Left">
+                                <TextBlock Text="没有添加音乐库" 
+                                          Margin="42,0,0,8"
+                                          Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            </controls:SettingsCard>
+                        </Grid>
+                    </controls:SettingsExpander.ItemsFooter>
+                </controls:SettingsExpander>
+                <controls:SettingsCard Header="刷新音乐库"
+                       HeaderIcon="{ui:FontIcon Glyph=&#xE90F;}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ProgressRing x:Name="LoadingIndicator" IsActive="False" Width="20" Height="20"/>
+                        <Button x:Name="RefreshButton" Click="FreshLibraryButton_Click">
+                            <FontIcon Glyph="&#xE72C;"
+                                      FontSize="16"/>
+                        </Button>
+                    </StackPanel>
+                </controls:SettingsCard>
+                <controls:SettingsExpander Header="调试选项"
+                                           HeaderIcon="{ui:FontIcon Glyph=&#xEC7A;}">
+                    <controls:SettingsExpander.ItemsHeader>
+                        <controls:SettingsCard Header="打开欢迎窗口">
+                            <Button Click="DebugWelcomeButton_Click">
+                                <FontIcon Glyph="&#xF7ED;"
+                                  FontSize="16"/>
+                            </Button>
+                        </controls:SettingsCard>
+                    </controls:SettingsExpander.ItemsHeader>
+                    <controls:SettingsExpander.ItemsFooter>
+                        <controls:SettingsCard Header="清空数据">
+                            <Button>
+                                <FontIcon Glyph="&#xE74D;"
+                                  FontSize="16"/>
+                            </Button>
+                        </controls:SettingsCard>
+                    </controls:SettingsExpander.ItemsFooter>
+                </controls:SettingsExpander>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Page>

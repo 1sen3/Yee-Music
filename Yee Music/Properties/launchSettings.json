@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Yee Music (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Yee Music (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
