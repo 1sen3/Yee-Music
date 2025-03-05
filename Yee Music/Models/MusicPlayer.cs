@@ -14,6 +14,8 @@ using FFmpeg;
 using NAudio.Wave;
 using Windows.Storage;
 using System.Timers;
+using Yee_Music.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Yee_Music.Models
 {
@@ -37,6 +39,7 @@ namespace Yee_Music.Models
         private readonly DispatcherTimer _positionTimer;
         private PlaybackMode _playMode = PlaybackMode.Sequential;
         private readonly AppSettings _settings;
+        private PlayQueueService _playQueueService;
 
         public event Action PlaybackCompleted;
         public event Action<bool> PlaybackStateChanged;
@@ -153,7 +156,11 @@ namespace Yee_Music.Models
                         _mediaPlayer.PlaybackSession.Position = position;
                         Debug.WriteLine($"设置播放位置: {position}");
                     }
+                    // 从数据库获取最新的收藏状态
+                    UpdateMusicFavoriteStatus(music);
 
+                    _currentMusic = music;
+                    CurrentMusicChanged?.Invoke(music);
                     // 不调用 _mediaPlayer.Play()
                     _isPlaying = false;
                     PlaybackStateChanged?.Invoke(false);
@@ -196,7 +203,20 @@ namespace Yee_Music.Models
             _settings = AppSettings.Load();
 
             _mediaPlayer = new MediaPlayer();
-
+            // 获取播放队列服务
+            _playQueueService = PlayQueueService.Instance;
+            // 监听队列加载完成事件
+            _playQueueService.QueueLoaded += (s, e) =>
+            {
+                // 如果有当前播放的歌曲，恢复播放
+                var currentMusic = _playQueueService.GetCurrent();
+                if (currentMusic != null)
+                {
+                    // 可以选择自动播放或只更新当前歌曲信息
+                    _currentMusic = currentMusic;
+                    // 如果需要自动播放，取消下面的注释
+                }
+            };
             // 从设置中加载播放模式 - 将字符串转换为枚举
             if (Enum.TryParse(_settings.PlayMode, out PlaybackMode mode))
             {
@@ -385,6 +405,33 @@ namespace Yee_Music.Models
             Debug.WriteLine($"应用关闭时保存状态：位置={_settings.LastPlaybackPosition}秒，模式={_settings.PlayMode}");
 
             _positionTimer?.Stop();
+        }
+        // 更新歌曲的喜欢状态
+        public void UpdateCurrentMusicFavoriteState()
+        {
+            if (_currentMusic != null)
+            {
+                UpdateMusicFavoriteStatus(_currentMusic);
+            }
+        }
+        // 从数据库获取音乐的最新收藏状态
+        private async void UpdateMusicFavoriteStatus(MusicInfo music)
+        {
+            try
+            {
+                var databaseService = App.Services.GetService<DatabaseService>();
+                if (databaseService != null)
+                {
+                    // 获取最新的收藏状态
+                    bool isFavorite = await databaseService.IsMusicFavoriteAsync(music.FilePath);
+                    music.IsFavorite = isFavorite;
+                    System.Diagnostics.Debug.WriteLine($"更新音乐收藏状态: {music.Title}, 收藏: {isFavorite}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"获取音乐收藏状态出错: {ex.Message}");
+            }
         }
     }
 }

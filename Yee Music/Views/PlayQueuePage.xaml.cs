@@ -37,63 +37,91 @@ namespace Yee_Music.Pages
             // 设置双向绑定的上下文
             this.DataContext = ViewModel;
 
+            InitializeContextMenu();
         }
-        private void Grid_PointerEntered(object sender, PointerRoutedEventArgs e)
+        protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (sender is Grid grid)
+            base.OnNavigatedTo(e);
+ 
+            if (ViewModel != null)
             {
-                // 查找播放按钮和音乐图标
-                var playButton = grid.FindName("PlayButton") as Button;
-                var musicIcon = grid.FindName("MusicFontIcon") as FontIcon;
-
-                if (playButton != null && musicIcon != null)
+                ViewModel.RefreshProperties();
+            }
+        }
+        private async void MusicList_PropertiesClick(object sender, MusicInfo music)
+        {
+            try
+            {
+                if (music != null)
                 {
-                    playButton.Visibility = Visibility.Visible;
-                    musicIcon.Visibility = Visibility.Collapsed;
+                    var dialog = new MusicPropertiesDialog();
+                    dialog.SetMusic(music);
+                    dialog.XamlRoot = this.XamlRoot;
+
+                    await dialog.ShowAsync();
                 }
             }
-        }
-
-        private void Grid_PointerExited(object sender, PointerRoutedEventArgs e)
-        {
-            if (sender is Grid grid)
+            catch (Exception ex)
             {
-                // 查找播放按钮和音乐图标
-                var playButton = grid.FindName("PlayButton") as Button;
-                var musicIcon = grid.FindName("MusicFontIcon") as FontIcon;
+                System.Diagnostics.Debug.WriteLine($"显示属性对话框时出错: {ex.Message}");
+            }
+        }
+        private void InitializeContextMenu()
+        {
+            // 确保MusicList控件已初始化
+            if (MusicList == null)
+            {
+                System.Diagnostics.Debug.WriteLine("MusicList控件未找到");
+                return;
+            }
 
-                if (playButton != null && musicIcon != null)
+            // 确保ViewModel已初始化
+            if (ViewModel == null)
+            {
+                System.Diagnostics.Debug.WriteLine("ViewModel未初始化");
+                return;
+            }
+
+            try
+            {
+                // 确保ContextMenuItems集合已初始化
+                if (MusicList.ContextMenuItems == null)
                 {
-                    playButton.Visibility = Visibility.Collapsed;
-                    musicIcon.Visibility = Visibility.Visible;
+                    MusicList.ContextMenuItems = new ObservableCollection<MenuFlyoutItemBase>();
                 }
-            }
-        }
 
-        private void PlayButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button button && button.DataContext is MusicInfo music)
-            {
-                ViewModel.PlayMusicCommand.Execute(music);
-            }
-        }
+                // 清空现有菜单项，避免重复添加
+                MusicList.ContextMenuItems.Clear();
 
-        private void PlayQueueListView_ItemClick(object sender, ItemClickEventArgs e)
-        {
-            if (e.ClickedItem is MusicInfo music)
-            {
-                ViewModel.PlayMusicCommand.Execute(music);
-            }
-        }
-        private async void MusicProperties_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is MusicInfo music)
-            {
-                var dialog = new MusicPropertiesDialog();
-                dialog.SetMusic(music);
-                dialog.XamlRoot = this.XamlRoot;
+                // 移出播放列表菜单项
+                var removeFromQueueItem = new MenuFlyoutItem
+                {
+                    Text = "移出播放列表",
+                    Icon = new FontIcon { Glyph = "\uE74D" }  // 使用删除图标
+                };
 
-                await dialog.ShowAsync();
+                // 检查命令是否存在
+                if (ViewModel.RemoveMusicCommand != null)
+                {
+                    removeFromQueueItem.Command = ViewModel.RemoveMusicCommand;
+                    // 直接使用命令参数绑定，不需要设置CommandParameter
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("RemoveMusicCommand未实现");
+                }
+
+                // 添加到控件的右键菜单
+                MusicList.ContextMenuItems.Add(removeFromQueueItem);
+
+                // 手动调用添加菜单项方法
+                MusicList.AddContextMenuItem(removeFromQueueItem);
+
+                System.Diagnostics.Debug.WriteLine("成功添加移出播放列表菜单项");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"添加菜单项时出错: {ex.Message}");
             }
         }
     }

@@ -26,6 +26,7 @@
     <Compile Remove="Services\D阿塔、.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Controls\MusicListControl.xaml" />
     <None Remove="Views\AboutSettingsPage.xaml" />
     <None Remove="Views\FavoritePage.xaml" />
     <None Remove="Views\HomePage.xaml" />
@@ -180,5 +181,10 @@
   </ItemGroup>
   <ItemGroup>
     <PRIResource Remove="bin\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Controls\MusicListControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 </Project>

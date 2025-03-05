@@ -37,63 +37,22 @@ namespace Yee_Music.Pages
             // 设置DataContext
             this.DataContext = ViewModel;
         }
-
-
-        private void FavoriteSongsListView_ItemClick(object sender, ItemClickEventArgs e)
+        private async void MusicList_PropertiesClick(object sender, MusicInfo music)
         {
-            if (e.ClickedItem is MusicInfo music)
+            try
             {
-                ViewModel.PlayMusicCommand.Execute(music);
-            }
-        }
-        private void RemoveButton_Click(object sender, RoutedEventArgs e)
-        {
-            if ((sender as FrameworkElement)?.DataContext is MusicInfo music)
-            {
-                ViewModel.RemoveFavoriteCommand.Execute(music);
-            }
-        }
-        private void PlayButton_Click(object sender, RoutedEventArgs e)
-        {
-            if ((sender as FrameworkElement)?.DataContext is MusicInfo music)
-            {
-                ViewModel.PlayMusicCommand.Execute(music);
-            }
-        }
-
-        private void FavoriteSongsListView_PointerEntered(object sender, PointerRoutedEventArgs e)
-        {
-            if (sender is FrameworkElement element && element.FindName("PlayButton") is Button playButton)
-            {
-                playButton.Visibility = Visibility.Visible;
-            }
-        }
-
-        private void FavoriteSongsListView_PointerExited(object sender, PointerRoutedEventArgs e)
-        {
-            if (sender is FrameworkElement element)
-            {
-                if (element.FindName("PlayButton") is Button playButton)
+                if (music != null)
                 {
-                    playButton.Visibility = Visibility.Collapsed;
-                }
+                    var dialog = new MusicPropertiesDialog();
+                    dialog.SetMusic(music);
+                    dialog.XamlRoot = this.XamlRoot;
 
-                // 同时隐藏移除按钮
-                if (element.FindName("RemoveButton") is Button removeButton)
-                {
-                    removeButton.Visibility = Visibility.Collapsed;
+                    await dialog.ShowAsync();
                 }
             }
-        }
-        private async void MusicProperties_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is MusicInfo music)
+            catch (Exception ex)
             {
-                var dialog = new MusicPropertiesDialog();
-                dialog.SetMusic(music);
-                dialog.XamlRoot = this.XamlRoot;
-
-                await dialog.ShowAsync();
+                System.Diagnostics.Debug.WriteLine($"显示属性对话框时出错: {ex.Message}");
             }
         }
     }

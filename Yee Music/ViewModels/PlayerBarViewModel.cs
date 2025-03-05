@@ -10,6 +10,7 @@ using Microsoft.UI.Dispatching;
 using System.Diagnostics;
 using Yee_Music.Services;
 using System.Windows.Input;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Yee_Music.ViewModels
 {
@@ -23,7 +24,8 @@ namespace Yee_Music.ViewModels
         private double _volume;
         private bool _isMuted;
         private IRelayCommand _toggleMuteCommand;
-        public ICommand ToggleFavoriteCommand { get; }
+        private IRelayCommand<MusicInfo> _toggleFavoriteCommand;
+        public IRelayCommand<MusicInfo> ToggleFavoriteCommand => _toggleFavoriteCommand ??= new RelayCommand<MusicInfo>(ToggleFavorite);
         private TimeSpan _currentTime;
         private string _currentTimeText;
         private readonly DispatcherQueue _dispatcherQueue;
@@ -111,7 +113,6 @@ namespace Yee_Music.ViewModels
             PlayPauseCommand = new RelayCommand(PlayPause);
             PreviousCommand = new RelayCommand(PlayPrevious);
             NextCommand = new RelayCommand(PlayNext);
-            ToggleFavoriteCommand = new RelayCommand(ToggleFavorite);
             // 订阅播放器事件
             _player.CurrentMusicChanged += OnCurrentMusicChanged;
             _player.PlaybackStateChanged += OnPlaybackStateChanged;
@@ -318,29 +319,31 @@ namespace Yee_Music.ViewModels
                 await _player.PlayAsync(CurrentMusic);
             }
         }
-        private async void ToggleFavorite()
+        private async void ToggleFavorite(MusicInfo music)
         {
-            if (CurrentMusic == null)
+            if (music != null)
             {
-                return;
+                try
+                {
+                    // 切换收藏状态
+                    music.IsFavorite = !music.IsFavorite;
+
+                    // 更新数据库
+                    var databaseService = App.Services.GetService<DatabaseService>();
+                    if (databaseService != null)
+                    {
+                        await databaseService.UpdateMusicFavoriteStatusAsync(music.FilePath, music.IsFavorite);
+                        System.Diagnostics.Debug.WriteLine($"更新音乐收藏状态: {music.Title}, 收藏: {music.IsFavorite}");
+                    }
+
+                    // 通知 UI 更新
+                    OnPropertyChanged(nameof(CurrentMusic));
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"切换收藏状态出错: {ex.Message}");
+                }
             }
-
-            // 切换喜欢状态
-            CurrentMusic.IsFavorite = !CurrentMusic.IsFavorite;
-
-            // 通知UI更新
-            OnPropertyChanged(nameof(CurrentMusic));
-
-            // 保存喜欢状态到数据库
-            var dbService = App.Services.GetService(typeof(DatabaseService)) as DatabaseService;
-            if (dbService != null)
-            {
-                await dbService.UpdateFavoriteStatusAsync(CurrentMusic.FilePath, CurrentMusic.IsFavorite);
-                Debug.WriteLine($"{(CurrentMusic.IsFavorite ? "添加到" : "从")}喜欢列表{(CurrentMusic.IsFavorite ? "" : "移除")}: {CurrentMusic.Title}");
-            }
-
-            // 触发事件通知其他ViewModel
-            FavoriteStatusChanged?.Invoke(this, CurrentMusic);
         }
         private async void SaveFavoriteStatus(MusicInfo music)
         {

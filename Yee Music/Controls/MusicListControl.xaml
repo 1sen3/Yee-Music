@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Yee_Music.Controls.MusicListControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Yee_Music.Controls"
+    xmlns:models="using:Yee_Music.Models"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    d:DesignHeight="300"
+    d:DesignWidth="400">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 表头 -->
+        <Grid x:Name="TitleBar"
+              Padding="0 0 44 0"
+              Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="50"/>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="1.5*"/>
+                <ColumnDefinition Width="1.5*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock VerticalAlignment="Center"
+                       FontSize="12"
+                       TextTrimming="CharacterEllipsis"
+                       Text="歌名"
+                       Grid.Column="1"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="16 0 0 0"/>
+
+            <TextBlock VerticalAlignment="Center"
+                       FontSize="12"
+                       TextTrimming="CharacterEllipsis"
+                       Text="歌手"
+                       Grid.Column="2"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="18 0 0 0"/>
+
+            <TextBlock VerticalAlignment="Center"
+                       FontSize="12"
+                       TextTrimming="CharacterEllipsis"
+                       Text="专辑"
+                       Grid.Column="3"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="12 0 0 0"/>
+
+            <TextBlock VerticalAlignment="Center"
+                       FontSize="12"
+                       TextTrimming="CharacterEllipsis"
+                       Text="歌曲时长"
+                       Grid.Column="4"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="-10 0 0 0"/>
+        </Grid>
+
+        <!-- 空状态提示 -->
+        <Grid x:Name="EmptyStateGrid" 
+              Grid.Row="1" 
+              Visibility="{x:Bind ShowEmptyState, Mode=OneWay}"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Margin="0,0,44,0">
+            <StackPanel Spacing="16" HorizontalAlignment="Center">
+                <FontIcon Glyph="{x:Bind EmptyStateIcon, Mode=OneWay}" 
+                          FontSize="36" 
+                          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                          HorizontalAlignment="Center"/>
+                <TextBlock Text="{x:Bind EmptyStateTitle, Mode=OneWay}" 
+                           Style="{StaticResource SubtitleTextBlockStyle}"
+                           FontWeight="Bold"
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="{x:Bind EmptyStateDescription, Mode=OneWay}" 
+                           Style="{StaticResource BodyTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- 音乐列表 -->
+        <ListView x:Name="MusicListView"
+                  ItemsSource="{x:Bind MusicList, Mode=OneWay}"
+                  SelectedItem="{x:Bind SelectedMusic, Mode=TwoWay}"
+                  Height="auto"
+                  ScrollViewer.VerticalScrollBarVisibility="Visible"
+                  Grid.Row="1"
+                  Margin="0 10 0 0"
+                  Padding="0 0 44 0"
+                  IsItemClickEnabled="True"
+                  ItemClick="MusicListView_ItemClick"
+                  Visibility="{x:Bind ShowEmptyState, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+            <ListView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel Orientation="Vertical"/>
+                </ItemsPanelTemplate>
+            </ListView.ItemsPanel>
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="models:MusicInfo">
+                    <Grid PointerEntered="Grid_PointerEntered"
+                          PointerExited="Grid_PointerExited">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="1.5*"/>
+                            <ColumnDefinition Width="1.5*"/>
+                            <ColumnDefinition Width="1*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Background="Transparent">
+                            <Button x:Name="PlayButton"
+                                    Command="{Binding ElementName=MusicListControl, Path=PlayCommand}"
+                                    CommandParameter="{Binding}"
+                                    Click="PlayButton_Click"
+                                    Visibility="Collapsed">
+                                <FontIcon FontSize="16"
+                                          Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                          Glyph="&#xE768;"/>
+                            </Button>
+                        </Border>
+
+                        <TextBlock VerticalAlignment="Center"
+                                   FontSize="12"
+                                   TextTrimming="CharacterEllipsis"
+                                   Text="{Binding Title}"
+                                   ToolTipService.ToolTip="{Binding Title}"
+                                   Grid.Column="1"/>
+
+                        <Button Background="Transparent" 
+                                BorderBrush="Transparent"
+                                Grid.Column="2">
+                            <TextBlock FontSize="12"
+                                       Text="{Binding Artist}"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTipService.ToolTip="{Binding Artist}"/>
+                        </Button>
+
+                        <Button Background="Transparent"
+                                BorderBrush="Transparent"
+                                Grid.Column="3">
+                            <TextBlock FontSize="12"
+                                       Text="{Binding Album}"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTipService.ToolTip="{Binding Album}"/>
+                        </Button>
+
+                        <TextBlock VerticalAlignment="Center"
+                                   FontSize="12"
+                                   TextTrimming="CharacterEllipsis"
+                                   Text="{Binding Duration, Converter={StaticResource DurationConverter}}"
+                                   Grid.Column="4"/>
+
+                        <!-- 右键菜单 -->
+                        <Grid.ContextFlyout>
+                            <MenuFlyout>
+                                <!-- 播放 -->
+                                <MenuFlyoutItem Text="播放" Icon="Play" Click="PlayMenuItem_Click"/>
+
+                                <!-- 添加到收藏夹 -->
+                                <MenuFlyoutItem x:Name="AddToFavoriteMenuItem" 
+                                                Text="添加到收藏夹" 
+                                                Click="AddToFavoriteMenuItem_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE734;"/>
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+
+                                <!-- 添加到播放列表 -->
+                                <MenuFlyoutItem x:Name="AddToPlaylistMenuItem" 
+                                                Text="添加到播放列表" 
+                                                Click="AddToPlaylistMenuItem_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8FD;"/>
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+
+                                <!-- 从播放列表移除 -->
+                                <MenuFlyoutItem x:Name="RemoveFromQueueMenuItem" 
+                                                Text="移出播放列表" 
+                                                Click="RemoveFromQueueMenuItem_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE74D;"/>
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+
+                                <!-- 分隔符 -->
+                                <MenuFlyoutSeparator/>
+
+                                <!-- 属性 -->
+                                <MenuFlyoutItem Text="属性" Click="PropertiesMenuItem_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE946;"/>
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Grid.ContextFlyout>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</UserControl>

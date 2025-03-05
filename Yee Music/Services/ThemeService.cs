@@ -3,6 +3,8 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Yee_Music.Models;
 using System;
+using Microsoft.UI;
+using Microsoft.UI.Windowing;
 
 namespace Yee_Music.Services
 {
@@ -105,7 +107,7 @@ namespace Yee_Music.Services
                 case "Default":
                 default:
                     theme = ElementTheme.Default;
-                    themeSetting = "Default"; // 确保保存正确的值
+                    themeSetting = "Default";
                     break;
             }
 
@@ -113,6 +115,7 @@ namespace Yee_Music.Services
             if (_mainWindow?.Content is FrameworkElement rootElement)
             {
                 rootElement.RequestedTheme = theme;
+                UpdateTitleBarButtonColors();
             }
 
             // 保存设置
@@ -220,6 +223,32 @@ namespace Yee_Music.Services
         public string GetTintColor()
         {
             return _settings.TintColor;
+        }
+        private void UpdateTitleBarButtonColors()
+        {
+            // 获取当前应用主题
+            var currentTheme = Application.Current.RequestedTheme;
+
+            // 获取AppWindow
+            var appWindow = App.MainWindow.AppWindow;
+
+            // 更新标题栏按钮颜色
+            if (appWindow != null)
+            {
+                // 重新应用自定义设置
+                if (currentTheme == ApplicationTheme.Dark)
+                {
+                    // 深色主题设置
+                    App.MainWindow.AppWindow.TitleBar.ButtonForegroundColor = Colors.White;
+                    App.MainWindow.AppWindow.TitleBar.ButtonBackgroundColor = Colors.Transparent;
+                }
+                else
+                {
+                    // 浅色主题设置
+                    App.MainWindow.AppWindow.TitleBar.ButtonForegroundColor = Colors.Black;
+                    App.MainWindow.AppWindow.TitleBar.ButtonBackgroundColor = Colors.Transparent;
+                }
+            }
         }
     }
 }

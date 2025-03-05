@@ -84,9 +84,10 @@
                 <FontIcon FontSize="14"
                           Glyph="&#xF8AD;"/>
             </Button>
-            <!-- 喜欢 -->
+            <!-- 喜欢按钮 -->
             <Button x:Name="FavoriteButton" 
                     Command="{Binding ToggleFavoriteCommand}"
+                    CommandParameter="{Binding CurrentMusic}"
                     Style="{StaticResource CommandBarFlyoutEllipsisButtonStyle}"
                     Background="Transparent" 
                     BorderThickness="0">

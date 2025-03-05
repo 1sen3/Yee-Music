@@ -18,15 +18,14 @@
                                            HeaderIcon="{ui:BitmapIcon Source=ms-appx:///Assets/StoreLogo.scale-100.png}">
                     <TextBlock 
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                               Text="0.1.7.20250302_Beta" />
+                               Text="0.2.1.20250305_Beta" />
                 </controls:SettingsCard>
                 <controls:SettingsCard Description="作者"
                                            Header="Kouhei"
                                            HeaderIcon="{ui:BitmapIcon Source=ms-appx:///Assets/1/2.png}">
-                    
-                    <TextBlock 
-                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                               Text=""/>
+                    <BitmapIcon UriSource="ms-appx:///Assets/1/2.png}"
+                                Width="40"
+                                Height="40"/>
                 </controls:SettingsCard>
             </StackPanel>
         </StackPanel>

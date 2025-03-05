@@ -28,6 +28,7 @@ namespace Yee_Music.ViewModels
         private readonly DatabaseService _databaseService;
         private ObservableCollection<MusicInfo> _favoriteMusicList = new ObservableCollection<MusicInfo>();
         private bool _isLoading;
+        public bool IsFavoriteEmpty => FavoriteMusicList == null || FavoriteMusicList.Count == 0;
         public bool IsLoading
         {
             get => _isLoading;
@@ -37,7 +38,14 @@ namespace Yee_Music.ViewModels
         public ObservableCollection<MusicInfo> FavoriteMusicList
         {
             get => _favoriteMusicList;
-            set => SetProperty(ref _favoriteMusicList, value);
+            set
+            {
+                if (SetProperty(ref _favoriteMusicList, value))
+                {
+                    // 当收藏列表变化时，通知 IsFavoriteEmpty 属性也可能变化
+                    OnPropertyChanged(nameof(IsFavoriteEmpty));
+                }
+            }
         }
 
         private LoadingState _loadingState = LoadingState.Loading;
@@ -126,6 +134,8 @@ namespace Yee_Music.ViewModels
             finally
             {
                 IsLoading = false;
+
+                OnPropertyChanged(nameof(IsFavoriteEmpty));
             }
         }
         private void PlayMusic(MusicInfo music)
@@ -165,7 +175,7 @@ namespace Yee_Music.ViewModels
 
                 // 从列表中移除
                 FavoriteMusicList.Remove(music);
-
+                OnPropertyChanged(nameof(IsFavoriteEmpty));
                 // 如果当前正在播放的是这首歌，也更新其状态
                 if (_player.CurrentMusic?.FilePath == music.FilePath)
                 {
@@ -197,5 +207,6 @@ namespace Yee_Music.ViewModels
             _player.CurrentMusicChanged -= OnCurrentMusicChanged;
             PlayerBarViewModel.FavoriteStatusChanged -= OnFavoriteStatusChanged;
         }
+
     }
 }

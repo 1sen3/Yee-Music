@@ -70,7 +70,10 @@ namespace Yee_Music
             AppSettings settings = AppSettings.Load();
             System.Diagnostics.Debug.WriteLine($"应用启动时读取的主题设置: {settings.ThemeSetting}");
             System.Diagnostics.Debug.WriteLine($"应用启动时读取的窗口材质设置: {settings.WindowMaterial}");
-
+            // 确保数据库服务已初始化
+            var databaseService = Services.GetService<DatabaseService>();
+            var playQueueService = PlayQueueService.Instance;
+            await playQueueService.InitializeAsync();
             // 始终创建MainWindow
             MainWindow = new MainWindow();
 

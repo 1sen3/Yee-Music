@@ -5,154 +5,20 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Yee_Music.Pages"
     xmlns:models="using:Yee_Music.Models"
+    xmlns:controls="using:Yee_Music.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
     <Grid Padding="44 20 0 0">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
-        <StackPanel Orientation="Vertical" 
-                    Spacing="20"
-                    Grid.Row="0">
-            <Grid x:Name="TitleBar"
-                  Padding="0 0 44 0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="50"/>
-                    <ColumnDefinition Width="2*"/>
-                    <ColumnDefinition Width="1.5*"/>
-                    <ColumnDefinition Width="1.5*"/>
-                    <ColumnDefinition Width="1*"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock VerticalAlignment="Center"
-                           FontSize="12"
-                           TextTrimming="CharacterEllipsis"
-                           Text="歌名"
-                           Grid.Column="1"
-                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                           Margin="16 0 0 0"/>
-                <TextBlock VerticalAlignment="Center"
-                           FontSize="12"
-                           TextTrimming="CharacterEllipsis"
-                           Text="歌手"
-                           Grid.Column="2"
-                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                           Margin="18 0 0 0"/>
-                <TextBlock VerticalAlignment="Center"
-                           FontSize="12"
-                           TextTrimming="CharacterEllipsis"
-                           Text="专辑"
-                           Grid.Column="3"
-                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                           Margin="12 0 0 0"/>
-                <TextBlock VerticalAlignment="Center"
-                           FontSize="12"
-                           TextTrimming="CharacterEllipsis"
-                           Text="歌曲时长"
-                           Grid.Column="4"
-                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                           Margin="-10 0 0 0"/>
-            </Grid>
-        </StackPanel>
-        <!-- 添加空状态提示 -->
-        <Grid x:Name="EmptyLibraryMessage" 
-              Grid.Row="1" 
-              Visibility="{Binding IsLibraryEmpty, Converter={StaticResource BoolToVisibilityConverter}}"
-              HorizontalAlignment="Center"
-              VerticalAlignment="Center"
-              Margin="0,0,44,0">
-            <StackPanel Spacing="16" HorizontalAlignment="Center">
-                <FontIcon Glyph="&#xE8F1;" 
-                          FontSize="36" 
-                          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                          HorizontalAlignment="Center"/>
-                <TextBlock Text="音乐库中暂时没有歌曲" 
-                           Style="{StaticResource SubtitleTextBlockStyle}"
-                           FontWeight="Bold"
-                           HorizontalAlignment="Center"/>
-                <TextBlock Text="但识琴中趣，何劳弦上声" 
-                           Style="{StaticResource BodyTextBlockStyle}"
-                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                           HorizontalAlignment="Center"/>
-            </StackPanel>
-        </Grid>
-        <ListView x:Name="LibrarySongsListView"
-          ItemsSource="{Binding MusicList}"
-          Height="auto"
-          ScrollViewer.VerticalScrollBarVisibility="Visible"
-          Grid.Row="1"
-          Margin="0 10 0 0"
-          Padding="0 0 44 0">
-            <ListView.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <VirtualizingStackPanel Orientation="Vertical"/>
-                </ItemsPanelTemplate>
-            </ListView.ItemsPanel>
-            <ListView.ItemTemplate>
-                <DataTemplate x:DataType="models:MusicInfo">
-                    <Grid PointerEntered="LibrarySongsListView_PointerEntered"
-                  PointerExited="LibrarySongsListView_PointerExited">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="50"/>
-                            <ColumnDefinition Width="2*"/>
-                            <ColumnDefinition Width="1.5*"/>
-                            <ColumnDefinition Width="1.5*"/>
-                            <ColumnDefinition Width="1*"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" Background="Transparent">
-                            <Button x:Name="PlayButton"
-                                    Command="{Binding DataContext.PlayCommand, ElementName=LibrarySongsListView}"
-                                    CommandParameter="{Binding}"
-                                    Visibility="Collapsed">
-                                <FontIcon FontSize="16"
-                                          Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                          Glyph="&#xE768;"/>
-                            </Button>
-                        </Border>
-                        <TextBlock VerticalAlignment="Center"
-                          FontSize="12"
-                          TextTrimming="CharacterEllipsis"
-                          Text="{Binding Title}"
-                          Grid.Column="1"/>
-                        <Button Background="Transparent" 
-                        BorderBrush="Transparent"
-                        Grid.Column="2">
-                            <TextBlock FontSize="12"
-                              Text="{Binding Artist}"
-                              TextTrimming="CharacterEllipsis"
-                              ToolTipService.ToolTip="{Binding Artist}"/>
-                        </Button>
-                        <Button Background="Transparent"
-                        BorderBrush="Transparent"
-                        Grid.Column="3">
-                            <TextBlock FontSize="12"
-                              Text="{Binding Album}"
-                              TextTrimming="CharacterEllipsis"
-                              ToolTipService.ToolTip="{Binding Album}"/>
-                        </Button>
-                        <TextBlock VerticalAlignment="Center"
-                          FontSize="12"
-                          TextTrimming="CharacterEllipsis"
-                          Text="{Binding Duration, Converter={StaticResource DurationConverter}}"
-                          Grid.Column="4"/>
-                        <!-- 添加右键菜单 -->
-                        <Grid.ContextFlyout>
-                            <MenuFlyout>
-                                <MenuFlyoutItem Text="播放" Icon="Play" Command="{Binding DataContext.PlayCommand, ElementName=LibrarySongsListView}" CommandParameter="{Binding}"/>
-                                <MenuFlyoutItem Text="添加到播放列表" Icon="Add"/>
-                                <MenuFlyoutSeparator/>
-                                <MenuFlyoutItem Text="属性" Click="MusicProperties_Click" Tag="{Binding}">
-                                    <MenuFlyoutItem.Icon>
-                                        <FontIcon Glyph="&#xE946;"/>
-                                    </MenuFlyoutItem.Icon>
-                                </MenuFlyoutItem>
-                            </MenuFlyout>
-                        </Grid.ContextFlyout>
-                    </Grid>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+        <controls:MusicListControl 
+            x:Name="MusicList"
+            MusicList="{x:Bind ViewModel.MusicList, Mode=OneWay}"
+            PlayCommand="{x:Bind ViewModel.PlayCommand}"
+            ShowEmptyState="{x:Bind ViewModel.IsLibraryEmpty, Mode=OneWay}"
+            EmptyStateIcon="&#xE8F1;"
+            EmptyStateTitle="音乐库为空"
+            EmptyStateDescription="请在设置中添加音乐库文件夹"
+            PropertiesClick="MusicList_PropertiesClick"/>
     </Grid>
 </Page>

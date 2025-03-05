@@ -592,5 +592,28 @@ namespace Yee_Music.ViewModels
 
             Debug.WriteLine($"已添加音乐库路径: {path}");
         }
+        private ICommand _addToFavoriteCommand;
+        public ICommand AddToFavoriteCommand => _addToFavoriteCommand ??= new RelayCommand<MusicInfo>(AddToFavorite);
+        private async void AddToFavorite(MusicInfo music)
+        {
+            if (music != null)
+            {
+                var dbService = App.Services.GetService(typeof(DatabaseService)) as DatabaseService;
+                if (dbService != null)
+                {
+                    await dbService.UpdateFavoriteStatusAsync(music.FilePath, music.IsFavorite);
+                    Debug.WriteLine($"{(music.IsFavorite ? "添加到" : "从")}喜欢列表{(music.IsFavorite ? "" : "移除")}: {music.Title}");
+                }
+            }
+        }
+        private ObservableCollection<MusicInfo> _favoriteMusicList = new ObservableCollection<MusicInfo>();
+        public ObservableCollection<MusicInfo> FavoriteMusicList
+        {
+            get => _favoriteMusicList;
+            set => SetProperty(ref _favoriteMusicList, value);
+        }
+
+        // 收藏列表是否为空
+        public bool IsFavoriteEmpty => FavoriteMusicList == null || FavoriteMusicList.Count == 0;
     }
 }

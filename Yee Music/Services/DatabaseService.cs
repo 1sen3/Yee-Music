@@ -33,17 +33,19 @@ namespace Yee_Music.Services
 
                 // 创建音乐库路径表
                 var command = connection.CreateCommand();
-                command.CommandText = @"
+                command.CommandText = 
+                @"
                     CREATE TABLE IF NOT EXISTS MusicLibraryPaths (
                         Id INTEGER PRIMARY KEY AUTOINCREMENT,
                         Path TEXT NOT NULL UNIQUE
-                    )";
+                )";
                 command.ExecuteNonQuery();
 
                 // 创建音乐表 - 添加LibraryPathId外键
                 command = connection.CreateCommand();
-                command.CommandText = @"
-                    CREATE TABLE IF NOT EXISTS Music (
+                command.CommandText = 
+                @"
+                        CREATE TABLE IF NOT EXISTS Music (
                         Id INTEGER PRIMARY KEY AUTOINCREMENT,
                         FilePath TEXT NOT NULL UNIQUE,
                         Title TEXT,
@@ -55,7 +57,29 @@ namespace Yee_Music.Services
                         PlayCount INTEGER DEFAULT 0,
                         LibraryPathId INTEGER,
                         FOREIGN KEY (LibraryPathId) REFERENCES MusicLibraryPaths(Id) ON DELETE CASCADE
-                    )";
+                )";
+                command.ExecuteNonQuery();
+                // 创建设置表
+                var settingsCommand = connection.CreateCommand();
+                settingsCommand.CommandText = 
+                @"
+                        CREATE TABLE IF NOT EXISTS Settings (
+                        Key TEXT PRIMARY KEY,
+                        Value TEXT
+                )";
+                await settingsCommand.ExecuteNonQueryAsync();
+                //创建播放列表
+                command = connection.CreateCommand();
+                command.CommandText=
+                @"
+                    CREATE TABLE IF NOT EXISTS PlaylistMusic (
+                    PlaylistId INTEGER,
+                    MusicId INTEGER,
+                    SortOrder INTEGER,
+                    PRIMARY KEY (PlaylistId, MusicId),
+                    FOREIGN KEY (PlaylistId) REFERENCES Playlist(Id) ON DELETE CASCADE,
+                    FOREIGN KEY (MusicId) REFERENCES Music(Id) ON DELETE CASCADE
+                )";
                 command.ExecuteNonQuery();
 
                 // 检查是否需要迁移数据（为现有音乐添加LibraryPathId）
@@ -79,27 +103,8 @@ namespace Yee_Music.Services
                     await MigrateMusic();
                 }
 
-                // 创建播放列表表
-                command = connection.CreateCommand();
-                command.CommandText = @"
-                    CREATE TABLE IF NOT EXISTS Playlist (
-                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        Name TEXT NOT NULL UNIQUE
-                    )";
-                command.ExecuteNonQuery();
-
-                // 创建播放列表-音乐关联表
-                command = connection.CreateCommand();
-                command.CommandText = @"
-                    CREATE TABLE IF NOT EXISTS PlaylistMusic (
-                        PlaylistId INTEGER,
-                        MusicId INTEGER,
-                        SortOrder INTEGER,
-                        PRIMARY KEY (PlaylistId, MusicId),
-                        FOREIGN KEY (PlaylistId) REFERENCES Playlist(Id) ON DELETE CASCADE,
-                        FOREIGN KEY (MusicId) REFERENCES Music(Id) ON DELETE CASCADE
-                    )";
-                command.ExecuteNonQuery();
+                // 创建播放队列表
+                await CreatePlayQueueTableAsync(connection);
 
                 Debug.WriteLine("数据库初始化成功");
             }
@@ -932,6 +937,220 @@ namespace Yee_Music.Services
             }
 
             return result;
+        }
+        public async Task CreatePlayQueueTableAsync(SqliteConnection connection)
+        {
+            try
+            {
+                var command = connection.CreateCommand();
+                command.CommandText= 
+                @"
+                    CREATE TABLE IF NOT EXISTS PlayQueue (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    MusicId INTEGER,
+                    SortOrder INTEGER,
+                    FOREIGN KEY (MusicId) REFERENCES Music(Id) ON DELETE CASCADE
+                )";
+                await command.ExecuteNonQueryAsync();
+                Debug.WriteLine("创建播放队列表成功");
+            }
+            catch(Exception ex)
+            {
+                Debug.WriteLine($"创建播放队列表出错: {ex.Message}");
+            }
+        }
+        public async Task SavePlayQueueAsync(List<MusicInfo> queue,int currentIndex)
+        {
+            try
+            {
+                using var connection = new SqliteConnection(_connectionString);
+                await connection.OpenAsync();
+
+                // 开始事务
+                using var transaction = connection.BeginTransaction();
+
+                try
+                {
+                    // 清空现有播放队列
+                    var clearCommand = connection.CreateCommand();
+                    clearCommand.CommandText = "DELETE FROM PlayQueue";
+                    clearCommand.Transaction = transaction;
+                    await clearCommand.ExecuteNonQueryAsync();
+
+                    // 保存当前索引到设置表
+                    var indexCommand = connection.CreateCommand();
+                    indexCommand.CommandText = @"
+                    CREATE TABLE IF NOT EXISTS Settings (
+                        Key TEXT PRIMARY KEY,
+                        Value TEXT
+                    )";
+                    indexCommand.Transaction = transaction;
+                    await indexCommand.ExecuteNonQueryAsync();
+
+                    var saveIndexCommand = connection.CreateCommand();
+                    saveIndexCommand.CommandText = @"
+                    INSERT OR REPLACE INTO Settings (Key, Value)
+                    VALUES ('CurrentPlayIndex', @Value)";
+                    saveIndexCommand.Parameters.AddWithValue("@Value", currentIndex.ToString());
+                    saveIndexCommand.Transaction = transaction;
+                    await saveIndexCommand.ExecuteNonQueryAsync();
+
+                    // 保存播放队列
+                    for (int i = 0; i < queue.Count; i++)
+                    {
+                        var music = queue[i];
+
+                        // 获取音乐ID
+                        var getMusicIdCommand = connection.CreateCommand();
+                        getMusicIdCommand.CommandText = "SELECT Id FROM Music WHERE FilePath = @FilePath";
+                        getMusicIdCommand.Parameters.AddWithValue("@FilePath", music.FilePath);
+                        getMusicIdCommand.Transaction = transaction;
+
+                        var musicId = await getMusicIdCommand.ExecuteScalarAsync();
+
+                        if (musicId != null)
+                        {
+                            var insertCommand = connection.CreateCommand();
+                            insertCommand.CommandText = @"
+                            INSERT INTO PlayQueue (MusicId, SortOrder)
+                            VALUES (@MusicId, @SortOrder)";
+                            insertCommand.Parameters.AddWithValue("@MusicId", musicId);
+                            insertCommand.Parameters.AddWithValue("@SortOrder", i);
+                            insertCommand.Transaction = transaction;
+
+                            await insertCommand.ExecuteNonQueryAsync();
+                        }
+                        else
+                        {
+                            Debug.WriteLine($"无法找到音乐ID: {music.FilePath}");
+                        }
+                    }
+
+                    // 提交事务
+                    transaction.Commit();
+                    Debug.WriteLine($"成功保存播放队列，共 {queue.Count} 首歌曲");
+                }
+                catch (Exception ex)
+                {
+                    // 回滚事务
+                    transaction.Rollback();
+                    Debug.WriteLine($"保存播放队列事务出错: {ex.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"保存播放队列出错: {ex.Message}");
+            }
+        }
+        // 加载播放队列
+        public async Task<(List<MusicInfo> Queue, int CurrentIndex)> LoadPlayQueueAsync()
+        {
+            var queue = new List<MusicInfo>();
+            int currentIndex = -1;
+
+            try
+            {
+                using var connection = new SqliteConnection(_connectionString);
+                await connection.OpenAsync();
+
+                // 获取当前索引
+                var indexCommand = connection.CreateCommand();
+                indexCommand.CommandText = "SELECT Value FROM Settings WHERE Key = 'CurrentPlayIndex'";
+
+                var indexResult = await indexCommand.ExecuteScalarAsync();
+                if (indexResult != null)
+                {
+                    int.TryParse(indexResult.ToString(), out currentIndex);
+                }
+
+                // 获取播放队列
+                var queueCommand = connection.CreateCommand();
+                queueCommand.CommandText = @"
+                SELECT m.FilePath, m.Title, m.Artist, m.Album, m.Duration, m.IsFavorite
+                FROM PlayQueue pq
+                JOIN Music m ON pq.MusicId = m.Id
+                ORDER BY pq.SortOrder";
+
+                using var reader = await queueCommand.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var music = new MusicInfo
+                    {
+                        FilePath = reader.GetString(0),
+                        Title = reader.GetString(1),
+                        Artist = reader.GetString(2),
+                        Album = reader.GetString(3),
+                        IsFavorite = reader.GetInt32(5) == 1
+                    };
+
+                    // 解析时长
+                    if (TimeSpan.TryParse(reader.GetString(4), out TimeSpan duration))
+                    {
+                        music.Duration = duration;
+                    }
+
+                    queue.Add(music);
+                }
+
+                Debug.WriteLine($"从数据库加载了 {queue.Count} 首歌曲的播放队列，当前索引: {currentIndex}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"加载播放队列出错: {ex.Message}");
+            }
+
+            return (queue, currentIndex);
+        }
+        // 检查音乐是否被收藏
+        public async Task<bool> IsMusicFavoriteAsync(string filePath)
+        {
+            try
+            {
+                using var connection = new SqliteConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var command = connection.CreateCommand();
+                command.CommandText = @"
+            SELECT IsFavorite FROM Music 
+            WHERE FilePath = @FilePath";
+                command.Parameters.AddWithValue("@FilePath", filePath);
+
+                var result = await command.ExecuteScalarAsync();
+
+                if (result != null && result != DBNull.Value)
+                {
+                    return Convert.ToInt32(result) == 1;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"检查音乐收藏状态出错: {ex.Message}");
+            }
+
+            return false;
+        }
+        // 更新音乐收藏状态
+        public async Task UpdateMusicFavoriteStatusAsync(string filePath, bool isFavorite)
+        {
+            try
+            {
+                using var connection = new SqliteConnection(_connectionString);
+                await connection.OpenAsync();
+
+                var command = connection.CreateCommand();
+                command.CommandText = @"
+            UPDATE Music 
+            SET IsFavorite = @IsFavorite 
+            WHERE FilePath = @FilePath";
+                command.Parameters.AddWithValue("@FilePath", filePath);
+                command.Parameters.AddWithValue("@IsFavorite", isFavorite ? 1 : 0);
+
+                await command.ExecuteNonQueryAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"更新音乐收藏状态出错: {ex.Message}");
+            }
         }
     }
 }
