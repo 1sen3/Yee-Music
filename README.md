@@ -2,16 +2,15 @@
 # Yee Music
 基于WinUI3的本地音乐播放器
 ## 计划中的功能
+- [x] 随机播放
+- [x] 完善播放列表功能
+- [x] 完善播放栏功能
 - [ ] 主页
 - [ ] 按歌手、专辑分类音乐
-- [ ] 按歌手名、专辑名、歌曲名排序音乐
-- [ ] 对音乐进行删除操作（或其他操作）时多选
-- [ ] 随机播放
 - [ ] 快捷键
-- [ ] 完善播放列表功能
 - [ ] 歌单
-- [ ] 接入在线音乐平台API
 - [ ] 歌词界面
+- [ ] 接入在线音乐平台API
 ## 界面展示
 ![1](https://github.com/user-attachments/assets/5727ffab-1503-4fa1-9fd8-b0fd0a99b5c1)
 ![2](https://github.com/user-attachments/assets/95e8f8f3-2dc6-46bf-b410-2dd47013c1fc)
