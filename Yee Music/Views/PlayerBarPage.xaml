@@ -159,6 +159,28 @@
             <!-- 播放列表 -->
             <Button x:Name="List_Button" 
                     Style="{StaticResource CommandBarFlyoutEllipsisButtonStyle}">
+                <Button.Flyout>
+                    <MenuFlyout x:Name="PlayQueueFlyout" 
+                                Placement="Top"
+                                Opening="PlayQueueFlyout_Opening"
+                                SystemBackdrop="{StaticResource AcrylicBackgroundFillColorDefaultBackdrop}">
+                        <MenuFlyoutItem Text="播放列表" IsEnabled="False">
+                        </MenuFlyoutItem>
+                        <MenuFlyoutSeparator/>
+                        <!-- 播放队列为空时显示 -->
+                        <MenuFlyoutItem x:Name="EmptyQueueItem" 
+                                        Text="播放队列为空"
+                                        IsEnabled="False"
+                                        Visibility="{x:Bind ViewModel.IsQueueEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        <!-- 播放队列项目模板 -->
+                        <MenuFlyout.MenuFlyoutPresenterStyle>
+                            <Style TargetType="MenuFlyoutPresenter">
+                                <Setter Property="MaxHeight" Value="400"/>
+                                <Setter Property="Width" Value="300"/>
+                            </Style>
+                        </MenuFlyout.MenuFlyoutPresenterStyle>
+                    </MenuFlyout>
+                </Button.Flyout>
                 <FontIcon FontSize="14"
                           Glyph="&#xEA37;"/>
             </Button>

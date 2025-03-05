@@ -11,6 +11,7 @@ using System.Diagnostics;
 using Yee_Music.Services;
 using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections.ObjectModel;
 
 namespace Yee_Music.ViewModels
 {
@@ -19,6 +20,7 @@ namespace Yee_Music.ViewModels
     {
         private readonly MusicPlayer _player;
         private MusicInfo _currentMusic;
+        private PlayQueueService _playQueueService;
         private bool _isPlaying;
         private double _progress;
         private double _volume;
@@ -34,7 +36,13 @@ namespace Yee_Music.ViewModels
         private PlaybackMode _playMode = PlaybackMode.Sequential;
         public event AlbumArtChangedEventHandler AlbumArtChanged;
         public byte[] AlbumArt => _currentMusic?.AlbumArt;
-
+        public ObservableCollection<MusicInfo> PlayQueue => _playQueueService.PlayQueue;
+        // 队列是否为空
+        public bool IsQueueEmpty => PlayQueue == null || PlayQueue.Count == 0;
+        public event EventHandler PlayQueueChanged;
+        // 播放特定音乐命令
+        private IRelayCommand<MusicInfo> _playMusicCommand;
+        public IRelayCommand<MusicInfo> PlayMusicCommand => _playMusicCommand ??= new RelayCommand<MusicInfo>(PlayMusic);
         public PlaybackMode PlayMode
         {
             get => _playMode;
@@ -79,8 +87,6 @@ namespace Yee_Music.ViewModels
         }
         public IRelayCommand ToggleRepeatCommand { get; }
 
-
-
         public PlayerBarViewModel()
         {
             _settings = AppSettings.Instance; // 使用单例实例
@@ -91,6 +97,9 @@ namespace Yee_Music.ViewModels
 
             _player = App.MusicPlayer;
             _volume = 100;
+
+            // 初始化 PlayQueueService
+            _playQueueService = PlayQueueService.Instance;
 
             // 初始化当前状态
             _currentMusic = _player.CurrentMusic;  // 直接设置字段
@@ -109,10 +118,21 @@ namespace Yee_Music.ViewModels
             // 订阅音量变化事件
             _player.VolumeChanged += OnVolumeChanged;
 
+            // 订阅播放队列变化事件
+            if (_playQueueService != null)
+            {
+                _playQueueService.QueueChanged += (s, e) =>
+                {
+                    OnPropertyChanged(nameof(IsQueueEmpty));
+                    PlayQueueChanged?.Invoke(this, EventArgs.Empty);
+                };
+            }
+
             // 命令初始化
             PlayPauseCommand = new RelayCommand(PlayPause);
             PreviousCommand = new RelayCommand(PlayPrevious);
             NextCommand = new RelayCommand(PlayNext);
+
             // 订阅播放器事件
             _player.CurrentMusicChanged += OnCurrentMusicChanged;
             _player.PlaybackStateChanged += OnPlaybackStateChanged;
@@ -142,7 +162,6 @@ namespace Yee_Music.ViewModels
             _player.PlaybackCompleted += OnPlaybackCompleted;
         }
 
-        // 在 OnCurrentMusicChanged 方法中添加
         private void OnCurrentMusicChanged(MusicInfo music)
         {
             CurrentMusic = music;  // 使用属性而不是字段
@@ -338,6 +357,9 @@ namespace Yee_Music.ViewModels
 
                     // 通知 UI 更新
                     OnPropertyChanged(nameof(CurrentMusic));
+
+                    // 触发事件通知其他地方更新
+                    OnFavoriteStatusChanged(music);
                 }
                 catch (Exception ex)
                 {
@@ -345,6 +367,7 @@ namespace Yee_Music.ViewModels
                 }
             }
         }
+
         private async void SaveFavoriteStatus(MusicInfo music)
         {
             try
@@ -389,9 +412,51 @@ namespace Yee_Music.ViewModels
         public static event EventHandler<MusicInfo> FavoriteStatusChanged;
         public static void OnFavoriteStatusChanged(MusicInfo music)
         {
-            // 触发FavoriteStatusChanged事件
             FavoriteStatusChanged?.Invoke(null, music);
-            Debug.WriteLine($"触发喜欢状态变更事件: {music.Title}, 状态: {music.IsFavorite}");
+        }
+        private void PlayMusic(MusicInfo music)
+        {
+            if (music != null && _playQueueService != null)
+            {
+                int index = -1;
+
+                // 在播放队列中查找音乐索引
+                if (_playQueueService.PlayQueue != null)
+                {
+                    for (int i = 0; i < _playQueueService.PlayQueue.Count; i++)
+                    {
+                        if (_playQueueService.PlayQueue[i].FilePath == music.FilePath)
+                        {
+                            index = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (index >= 0)
+                {
+                    // 直接使用 _player 播放指定索引的音乐
+                    _player.PlayAsync(_playQueueService.PlayQueue[index]);
+                }
+            }
+        }
+
+        // 从播放列表移除音乐命令
+        private IRelayCommand<MusicInfo> _removeMusicCommand;
+        public IRelayCommand<MusicInfo> RemoveMusicCommand => _removeMusicCommand ??= new RelayCommand<MusicInfo>(RemoveMusic);
+        private void RemoveMusic(MusicInfo music)
+        {
+            if (music != null && _playQueueService != null && _playQueueService.PlayQueue != null)
+            {
+                // 从播放队列中移除音乐
+                var itemToRemove = _playQueueService.PlayQueue.FirstOrDefault(m => m.FilePath == music.FilePath);
+                if (itemToRemove != null)
+                {
+                    _playQueueService.PlayQueue.Remove(itemToRemove);
+                    OnPropertyChanged(nameof(IsQueueEmpty));
+                    PlayQueueChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
         }
     }
 }

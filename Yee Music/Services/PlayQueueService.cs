@@ -28,6 +28,9 @@ namespace Yee_Music.Services
         private readonly DatabaseService _databaseService;
         private bool _isInitialized = false;
         public event EventHandler QueueLoaded;
+
+        // 队列变化事件
+        public event EventHandler QueueChanged;
         private PlayQueueService()
         {
             Debug.WriteLine("创建 PlayQueueService 实例");
@@ -237,6 +240,32 @@ namespace Yee_Music.Services
             Debug.WriteLine("清空播放列表");
 
             SaveQueueToDatabaseAsync().ConfigureAwait(false);
+        }
+
+        // 获取音乐在队列中的索引
+        public int GetIndexOf(MusicInfo music)
+        {
+            if (music == null || PlayQueue == null)
+                return -1;
+
+            for (int i = 0; i < PlayQueue.Count; i++)
+            {
+                if (PlayQueue[i].FilePath == music.FilePath)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        // 播放指定索引的音乐
+        public void PlayAt(int index)
+        {
+            if (index >= 0 && index < PlayQueue.Count)
+            {
+                App.MusicPlayer.PlayAsync(PlayQueue[index]);
+            }
         }
     }
 }

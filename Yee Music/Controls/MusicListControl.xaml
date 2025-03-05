@@ -159,7 +159,7 @@
 
                         <!-- 右键菜单 -->
                         <Grid.ContextFlyout>
-                            <MenuFlyout>
+                            <MenuFlyout x:Name="MusicListMenuFlyout" SystemBackdrop="{StaticResource AcrylicBackgroundFillColorDefaultBackdrop}">
                                 <!-- 播放 -->
                                 <MenuFlyoutItem Text="播放" Icon="Play" Click="PlayMenuItem_Click"/>
 

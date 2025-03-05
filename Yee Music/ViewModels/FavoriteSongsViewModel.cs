@@ -200,6 +200,30 @@ namespace Yee_Music.ViewModels
         {
             // 当喜欢状态变化时刷新列表
             _ = LoadFavoriteSongsAsync();
+
+            // 检查是否需要添加或移除歌曲
+            if (music != null)
+            {
+                if (music.IsFavorite)
+                {
+                    // 如果歌曲被添加到收藏，但不在列表中，则添加
+                    if (!FavoriteMusicList.Any(m => m.FilePath == music.FilePath))
+                    {
+                        FavoriteMusicList.Add(music);
+                        OnPropertyChanged(nameof(IsFavoriteEmpty));
+                    }
+                }
+                else
+                {
+                    // 如果歌曲从收藏中移除，但仍在列表中，则移除
+                    var itemToRemove = FavoriteMusicList.FirstOrDefault(m => m.FilePath == music.FilePath);
+                    if (itemToRemove != null)
+                    {
+                        FavoriteMusicList.Remove(itemToRemove);
+                        OnPropertyChanged(nameof(IsFavoriteEmpty));
+                    }
+                }
+            }
         }
 
         public void Dispose()

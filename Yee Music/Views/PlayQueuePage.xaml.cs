@@ -37,7 +37,7 @@ namespace Yee_Music.Pages
             // 设置双向绑定的上下文
             this.DataContext = ViewModel;
 
-            InitializeContextMenu();
+            InitializeContextMenu();  
         }
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
