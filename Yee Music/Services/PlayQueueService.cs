@@ -267,5 +267,42 @@ namespace Yee_Music.Services
                 App.MusicPlayer.PlayAsync(PlayQueue[index]);
             }
         }
+        // 获取随机歌曲
+        public MusicInfo GetRandom()
+        {
+            if (PlayQueue == null || PlayQueue.Count == 0)
+                return null;
+
+            // 使用随机数生成器选择一首歌曲
+            var random = new Random();
+            int randomIndex = random.Next(0, PlayQueue.Count);
+
+            // 更新当前播放位置
+            CurrentIndex = randomIndex;
+
+            return PlayQueue[randomIndex];
+        }
+        // 设置播放位置到最后一首歌曲
+        public void SetPositionToLast()
+        {
+            if (PlayQueue != null && PlayQueue.Count > 0)
+            {
+                CurrentIndex = PlayQueue.Count - 1;
+            }
+        }
+        // 重置播放位置到列表开始
+        public void ResetPosition()
+        {
+            if (PlayQueue != null && PlayQueue.Count > 0)
+            {
+                CurrentIndex = -1; // 设置为-1，这样GetNext()调用时会变成0
+                Debug.WriteLine("重置播放位置到列表开始");
+
+                // 保存到数据库
+                SaveQueueToDatabaseAsync().ConfigureAwait(false);
+            }
+        }
+
+
     }
 }

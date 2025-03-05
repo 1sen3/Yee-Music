@@ -163,14 +163,39 @@ namespace Yee_Music.Pages
         {
             var menuItem = new MenuFlyoutItem
             {
-                Text = $"{music.Title} - {music.Artist}",
+                Text = ViewModel.CurrentMusic != null && ViewModel.CurrentMusic.FilePath == music.FilePath
+                    ? $"播放中 {music.Title} - {music.Artist}"
+                    : $"{music.Title} - {music.Artist}",
                 DataContext = music
             };
 
-            // 设置当前播放歌曲的图标
+            // 设置当前播放歌曲的文本颜色为系统强调色
             if (ViewModel.CurrentMusic != null && ViewModel.CurrentMusic.FilePath == music.FilePath)
             {
-                menuItem.Icon = new FontIcon { Glyph = "\uEE4A", FontSize = 9 };
+                try
+                {
+                    // 尝试获取系统强调色
+                    if (Application.Current.Resources.TryGetValue("SystemAccentColor", out object accentColorObj) &&
+                        accentColorObj is Windows.UI.Color accentColor)
+                    {
+                        menuItem.Foreground = new SolidColorBrush(accentColor);
+                    }
+                    else if (Application.Current.Resources.TryGetValue("SystemControlHighlightAccentBrush", out object accentBrushObj) &&
+                             accentBrushObj is SolidColorBrush accentBrush)
+                    {
+                        menuItem.Foreground = accentBrush;
+                    }
+                    else
+                    {
+                        // 如果无法获取系统强调色，使用默认的强调色
+                        menuItem.Foreground = new SolidColorBrush(Microsoft.UI.Colors.DodgerBlue);
+                    }
+                }
+                catch
+                {
+                    // 出现异常时使用默认的强调色
+                    menuItem.Foreground = new SolidColorBrush(Microsoft.UI.Colors.DodgerBlue);
+                }
             }
 
             // 添加点击事件

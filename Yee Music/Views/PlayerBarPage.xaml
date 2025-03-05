@@ -145,9 +145,11 @@
                     Padding="20">
             <!-- 随机播放 -->
             <Button x:Name="Shuffle_Button" 
-                    Style="{StaticResource CommandBarFlyoutEllipsisButtonStyle}">
+                    Style="{StaticResource CommandBarFlyoutEllipsisButtonStyle}"
+                    Command="{Binding ToggleShuffleCommand}">
                 <FontIcon FontSize="14"
-                          Glyph="&#xE8B1;"/>
+                          Glyph="{Binding IsShuffleEnabled, Converter={StaticResource RandomIconConverter}}"
+                          Foreground="{Binding IsShuffleEnabled, Converter={StaticResource RandomColorConverter}}"/>
             </Button>
             <!-- 循环播放 -->
             <Button x:Name="Repeat_Button" 

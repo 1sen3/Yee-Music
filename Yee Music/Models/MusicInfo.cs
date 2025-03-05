@@ -82,39 +82,6 @@ namespace Yee_Music.Models
                     file.Artist = string.Join(", ", tagFile.Tag.Performers);
                     file.Album = tagFile.Tag.Album;
                     file.Duration = tagFile.Properties.Duration;
-
-                    // 处理封面图片
-                    if (tagFile.Tag.Pictures.Length > 0)
-                    {
-                        try
-                        {
-                            var picture = tagFile.Tag.Pictures[0];
-                            var imageData = picture.Data.Data;
-
-                            // 检查是否已缓存
-                            if (!CoverImageCacheService.IsCoverImageCached(filePath))
-                            {
-                                // 保存到缓存
-                                await CoverImageCacheService.SaveCoverImageAsync(imageData, filePath);
-                            }
-
-                            // 从缓存加载
-                            var bitmap = await CoverImageCacheService.LoadCoverImageAsync(filePath);
-                            if (bitmap != null)
-                            {
-                                file.CoverImage = bitmap;
-                            }
-                            else
-                            {
-                                // 如果缓存加载失败，则直接从内存加载
-                                file.AlbumArt = imageData; // 直接设置AlbumArt属性
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Debug.WriteLine($"加载封面图片失败: {ex.Message}");
-                        }
-                    }
                 }
             }
             catch (Exception ex)

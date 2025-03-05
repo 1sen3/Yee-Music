@@ -17,7 +17,6 @@ namespace Yee_Music.Helpers
                     PlaybackMode.Sequential => "\uF5E7",  // 不循环图标
                     PlaybackMode.SingleRepeat => "\uE8ED", // 循环图标
                     PlaybackMode.ListRepeat => "\uE8EE",   // 列表循环图标
-                    PlaybackMode.Random => "\uE8B1",       // 随机播放图标
                     _ => "\uF5E7"
                 };
             }

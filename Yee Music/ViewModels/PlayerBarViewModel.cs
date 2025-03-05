@@ -26,6 +26,8 @@ namespace Yee_Music.ViewModels
         private double _volume;
         private bool _isMuted;
         private IRelayCommand _toggleMuteCommand;
+        private bool _isShuffleEnabled;
+        public IRelayCommand ToggleShuffleCommand { get; }
         private IRelayCommand<MusicInfo> _toggleFavoriteCommand;
         public IRelayCommand<MusicInfo> ToggleFavoriteCommand => _toggleFavoriteCommand ??= new RelayCommand<MusicInfo>(ToggleFavorite);
         private TimeSpan _currentTime;
@@ -55,6 +57,37 @@ namespace Yee_Music.ViewModels
                 }
             }
         }
+        public bool IsShuffleEnabled
+        {
+            get => _isShuffleEnabled;
+            set
+            {
+                if (SetProperty(ref _isShuffleEnabled, value))
+                {
+                    // 将随机播放状态应用到播放器
+                    _player.IsShuffleEnabled = value;
+
+                    // 如果开启随机播放，但当前是循环模式，则不允许
+                    if (value && (_playMode == PlaybackMode.SingleRepeat || _playMode == PlaybackMode.ListRepeat))
+                    {
+                        // 循环模式优先级高于随机播放
+                        _isShuffleEnabled = false;
+                        _player.IsShuffleEnabled = false;
+                        Debug.WriteLine("循环模式下不能开启随机播放");
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"随机播放状态已更改为: {value}");
+                    }
+
+                    // 保存设置
+                    _settings.IsShuffleEnabled = _isShuffleEnabled;
+                    _settings.Save();
+
+                    OnPropertyChanged(nameof(IsShuffleEnabled));
+                }
+            }
+        }
         public IRelayCommand ChangePlayModeCommand { get; }
 
         private void ChangePlayMode()
@@ -62,18 +95,24 @@ namespace Yee_Music.ViewModels
             // 循环切换播放模式
             PlayMode = PlayMode switch
             {
-                PlaybackMode.Sequential => PlaybackMode.SingleRepeat,
-                PlaybackMode.SingleRepeat => PlaybackMode.ListRepeat,
-                PlaybackMode.ListRepeat => PlaybackMode.Random,
-                PlaybackMode.Random => PlaybackMode.Sequential,
+                PlaybackMode.Sequential => PlaybackMode.ListRepeat,
+                PlaybackMode.ListRepeat => PlaybackMode.SingleRepeat,
+                PlaybackMode.SingleRepeat => PlaybackMode.Sequential,
+                PlaybackMode.Random => PlaybackMode.ListRepeat, // 从随机模式切换到列表循环
                 _ => PlaybackMode.Sequential
             };
 
             // 将播放模式应用到播放器
             _player.PlayMode = PlayMode;
 
+            // 如果切换到循环模式，则关闭随机播放
+            if (PlayMode == PlaybackMode.ListRepeat || PlayMode == PlaybackMode.SingleRepeat)
+            {
+                IsShuffleEnabled = false;
+            }
+
             // 输出调试信息
-            Debug.WriteLine($"播放模式已更改为: {PlayMode}");
+            Debug.WriteLine($"播放模式已更改为: {PlayMode}, 随机播放: {IsShuffleEnabled}");
         }
         public bool IsRepeatEnabled
         {
@@ -104,6 +143,8 @@ namespace Yee_Music.ViewModels
             // 初始化当前状态
             _currentMusic = _player.CurrentMusic;  // 直接设置字段
 
+            _isShuffleEnabled = _settings.IsShuffleEnabled;
+
             // 初始化音量相关
             _volume = _player.Volume;
             _isMuted = _player.IsMuted;
@@ -111,12 +152,17 @@ namespace Yee_Music.ViewModels
             // 初始化播放模式
             PlayMode = _player.PlayMode;
             Debug.WriteLine($"ViewModel初始化播放模式: {PlayMode}");
+            // 初始化随机播放命令
+            ToggleShuffleCommand = new RelayCommand(ToggleShuffle);
 
             // 添加音量命令
             ToggleMuteCommand = new RelayCommand(ToggleMute);
 
             // 订阅音量变化事件
             _player.VolumeChanged += OnVolumeChanged;
+
+            // 订阅播放模式变更事件
+            _player.PlayModeChanged += OnPlayModeChanged;
 
             // 订阅播放队列变化事件
             if (_playQueueService != null)
@@ -279,7 +325,27 @@ namespace Yee_Music.ViewModels
 
         private void PlayNext()
         {
-            var nextMusic = PlayQueueService.Instance.GetNext();
+            MusicInfo nextMusic = null;
+
+            // 根据播放模式选择下一首歌曲
+            if (_player.PlayMode == PlaybackMode.Random && IsShuffleEnabled)
+            {
+                // 随机模式下，获取随机歌曲
+                nextMusic = PlayQueueService.Instance.GetRandom();
+            }
+            else
+            {
+                // 其他模式下，获取下一首歌曲
+                nextMusic = PlayQueueService.Instance.GetNext();
+
+                // 如果到达列表末尾且是列表循环模式，则从头开始播放
+                if (nextMusic == null && _player.PlayMode == PlaybackMode.ListRepeat)
+                {
+                    PlayQueueService.Instance.ResetPosition();
+                    nextMusic = PlayQueueService.Instance.GetNext();
+                }
+            }
+
             if (nextMusic != null)
             {
                 _player.PlayAsync(nextMusic);
@@ -288,7 +354,27 @@ namespace Yee_Music.ViewModels
 
         private void PlayPrevious()
         {
-            var previousMusic = PlayQueueService.Instance.GetPrevious();
+            MusicInfo previousMusic = null;
+
+            // 根据播放模式选择上一首歌曲
+            if (_player.PlayMode == PlaybackMode.Random && IsShuffleEnabled)
+            {
+                // 随机模式下，获取随机歌曲
+                previousMusic = PlayQueueService.Instance.GetRandom();
+            }
+            else
+            {
+                // 其他模式下，获取上一首歌曲
+                previousMusic = PlayQueueService.Instance.GetPrevious();
+
+                // 如果到达列表开头且是列表循环模式，则从末尾开始播放
+                if (previousMusic == null && _player.PlayMode == PlaybackMode.ListRepeat)
+                {
+                    PlayQueueService.Instance.SetPositionToLast();
+                    previousMusic = PlayQueueService.Instance.GetCurrent();
+                }
+            }
+
             if (previousMusic != null)
             {
                 _player.PlayAsync(previousMusic);
@@ -330,6 +416,58 @@ namespace Yee_Music.ViewModels
         private void ToggleRepeat()
         {
             IsRepeatEnabled = !IsRepeatEnabled;
+        }
+
+        // 添加随机播放切换方法
+        private void ToggleShuffle()
+        {
+            // 切换随机播放状态
+            IsShuffleEnabled = !IsShuffleEnabled;
+
+            // 如果开启随机播放，则设置播放模式为随机
+            if (IsShuffleEnabled)
+            {
+                // 只有在非循环模式下才能设置为随机播放
+                if (_playMode != PlaybackMode.SingleRepeat && _playMode != PlaybackMode.ListRepeat)
+                {
+                    PlayMode = PlaybackMode.Random;
+                    _player.PlayMode = PlayMode;
+                }
+                else
+                {
+                    // 如果是循环模式，则不允许开启随机播放
+                    IsShuffleEnabled = false;
+                }
+            }
+            else if (_playMode == PlaybackMode.Random)
+            {
+                // 如果关闭随机播放且当前是随机模式，则恢复为顺序播放
+                PlayMode = PlaybackMode.Sequential;
+                _player.PlayMode = PlayMode;
+            }
+
+            Debug.WriteLine($"切换随机播放: {IsShuffleEnabled}, 播放模式: {PlayMode}");
+        }
+        // 添加播放模式变更事件处理方法
+        private void OnPlayModeChanged(PlaybackMode mode, bool isShuffleEnabled)
+        {
+            // 更新 ViewModel 中的状态
+            PlayMode = mode;
+
+            // 只有当模式不是循环模式时，才更新随机播放状态
+            if (mode != PlaybackMode.SingleRepeat && mode != PlaybackMode.ListRepeat)
+            {
+                _isShuffleEnabled = isShuffleEnabled;
+                OnPropertyChanged(nameof(IsShuffleEnabled));
+            }
+            else
+            {
+                // 循环模式下，关闭随机播放
+                _isShuffleEnabled = false;
+                OnPropertyChanged(nameof(IsShuffleEnabled));
+            }
+
+            Debug.WriteLine($"播放模式已更改为: {mode}, 随机播放: {_isShuffleEnabled}");
         }
         private async void OnPlaybackCompleted()
         {

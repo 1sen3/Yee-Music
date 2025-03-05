@@ -15,9 +15,9 @@
             MusicList="{x:Bind ViewModel.FavoriteMusicList, Mode=OneWay}"
             PlayCommand="{x:Bind ViewModel.PlayMusicCommand}"
             ShowEmptyState="{x:Bind ViewModel.IsFavoriteEmpty, Mode=OneWay}"
-            EmptyStateIcon="&#xE734;"
-            EmptyStateTitle="收藏夹为空"
-            EmptyStateDescription="您还没有收藏任何歌曲"
+            EmptyStateIcon="&#xEB51;"
+            EmptyStateTitle="还没有喜欢的音乐"
+            EmptyStateDescription="泠泠七弦上，静听松风寒"
             PropertiesClick="MusicList_PropertiesClick"/>
     </Grid>
 </Page>

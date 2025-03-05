@@ -326,38 +326,10 @@ namespace Yee_Music.ViewModels
         {
             try
             {
-                var folder = await StorageFolder.GetFolderFromPathAsync(path);
-                var files = await folder.GetFilesAsync();
+                Debug.WriteLine($"开始扫描文件夹: {path}");
 
-                Debug.WriteLine($"在 {path} 中找到 {files.Count} 个文件");
-
-                // 分批处理文件，每批100个
-                const int batchSize = 100;
-                for (int i = 0; i < files.Count; i += batchSize)
-                {
-                    var batch = files.Skip(i).Take(batchSize);
-
-                    foreach (var file in batch)
-                    {
-                        try
-                        {
-                            string fileType = file.FileType.ToLower();
-                            if (fileType == ".mp3" || fileType == ".wav" || fileType == ".flac" || fileType == ".m4a")
-                            {
-                                var music = await MusicInfo.CreateFromFileAsync(file.Path);
-                                targetList.Add(music);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Debug.WriteLine($"处理音乐文件出错: {file.Path}, 错误: {ex.Message}");
-                            continue;
-                        }
-                    }
-
-                    // 每处理完一批就释放一次内存
-                    GC.Collect(0, GCCollectionMode.Optimized);
-                }
+                // 递归扫描文件夹
+                await ScanFolderRecursivelyAsync(path, targetList);
 
                 // 处理完一个文件夹后进行一次小型GC
                 GC.Collect(1, GCCollectionMode.Optimized);
@@ -433,6 +405,60 @@ namespace Yee_Music.ViewModels
             {
                 Debug.WriteLine($"添加音乐库时出错: {ex.Message}");
                 Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+            }
+        }
+        private async Task ScanFolderRecursivelyAsync(string folderPath, ObservableCollection<MusicInfo> targetList)
+        {
+            try
+            {
+                // 获取当前文件夹
+                var folder = await StorageFolder.GetFolderFromPathAsync(folderPath);
+
+                // 获取当前文件夹中的所有文件
+                var files = await folder.GetFilesAsync();
+                Debug.WriteLine($"在 {folderPath} 中找到 {files.Count} 个文件");
+
+                // 处理当前文件夹中的音乐文件
+                const int batchSize = 100;
+                for (int i = 0; i < files.Count; i += batchSize)
+                {
+                    var batch = files.Skip(i).Take(batchSize);
+
+                    foreach (var file in batch)
+                    {
+                        try
+                        {
+                            string fileType = file.FileType.ToLower();
+                            if (fileType == ".mp3" || fileType == ".wav" || fileType == ".flac" || fileType == ".m4a")
+                            {
+                                var music = await MusicInfo.CreateFromFileAsync(file.Path);
+                                targetList.Add(music);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"处理音乐文件出错: {file.Path}, 错误: {ex.Message}");
+                            continue;
+                        }
+                    }
+
+                    // 每处理完一批就释放一次内存
+                    GC.Collect(0, GCCollectionMode.Optimized);
+                }
+
+                // 获取所有子文件夹
+                var subFolders = await folder.GetFoldersAsync();
+                Debug.WriteLine($"在 {folderPath} 中找到 {subFolders.Count} 个子文件夹");
+
+                // 递归处理每个子文件夹
+                foreach (var subFolder in subFolders)
+                {
+                    await ScanFolderRecursivelyAsync(subFolder.Path, targetList);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"扫描文件夹出错: {folderPath}, 错误: {ex.Message}");
             }
         }
         // 添加一个公共方法来保存音乐库路径

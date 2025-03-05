@@ -18,7 +18,7 @@
                                            HeaderIcon="{ui:BitmapIcon Source=ms-appx:///Assets/StoreLogo.scale-100.png}">
                     <TextBlock 
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                               Text="0.2.2.20250305_Beta" />
+                               Text="0.2.3.20250305_Beta" />
                 </controls:SettingsCard>
                 <controls:SettingsCard Description="作者"
                                            Header="Kouhei"

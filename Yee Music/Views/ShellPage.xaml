@@ -43,7 +43,7 @@
                     </NavigationViewItem>
                     <NavigationViewItem x:Name="FavoritePage" Content="喜欢" Tag="Favorite">
                         <NavigationViewItem.Icon>
-                            <FontIcon Glyph="&#xEB52;"/>
+                            <FontIcon Glyph="&#xEB51;"/>
                         </NavigationViewItem.Icon>
                     </NavigationViewItem>
                     <NavigationViewItem x:Name="LibraryPage" Content="音乐库" Tag="Library">

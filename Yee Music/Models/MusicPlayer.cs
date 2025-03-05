@@ -47,6 +47,45 @@ namespace Yee_Music.Models
         public event Action<MusicInfo> CurrentMusicChanged;
         public event Action<double, bool> VolumeChanged;
 
+        private bool _isShuffleEnabled = false;
+        // 添加随机播放属性
+        public bool IsShuffleEnabled
+        {
+            get => _isShuffleEnabled;
+            set
+            {
+                // 如果循环模式为列表循环或单曲循环，则不允许开启随机播放
+                if (value && (_playMode == PlaybackMode.ListRepeat || _playMode == PlaybackMode.SingleRepeat))
+                {
+                    _isShuffleEnabled = false;
+                    return;
+                }
+
+                _isShuffleEnabled = value;
+
+                // 保存设置
+                _settings.IsShuffleEnabled = value;
+                _settings.Save();
+
+                // 如果开启随机播放，则设置播放模式为随机
+                if (value)
+                {
+                    _playMode = PlaybackMode.Random;
+                }
+                else if (_playMode == PlaybackMode.Random)
+                {
+                    // 如果关闭随机播放且当前是随机模式，则恢复为顺序播放
+                    _playMode = PlaybackMode.Sequential;
+                }
+
+                // 触发播放模式变更事件
+                PlayModeChanged?.Invoke(_playMode, _isShuffleEnabled);
+
+                Debug.WriteLine($"随机播放状态: {value}, 播放模式: {_playMode}");
+            }
+        }
+        // 播放模式变更事件
+        public event Action<PlaybackMode, bool> PlayModeChanged;
         public bool IsPlaying => _isPlaying;
         public double Progress => _progress;
         public double Volume
@@ -99,13 +138,44 @@ namespace Yee_Music.Models
             set
             {
                 _playMode = value;
+
+                // 如果设置为列表循环或单曲循环，则关闭随机播放
+                if (value == PlaybackMode.ListRepeat || value == PlaybackMode.SingleRepeat)
+                {
+                    _isShuffleEnabled = false;
+                }
+                // 如果设置为随机播放，则开启随机播放
+                else if (value == PlaybackMode.Random)
+                {
+                    _isShuffleEnabled = true;
+                }
+
                 UpdatePlayMode();
 
                 // 保存设置 - 将枚举转换为字符串
                 _settings.PlayMode = value.ToString();
+                _settings.IsShuffleEnabled = _isShuffleEnabled;
                 _settings.Save();
-                Debug.WriteLine($"保存播放模式: {value}");
+                Debug.WriteLine($"保存播放模式: {value}, 随机播放: {_isShuffleEnabled}");
             }
+        }
+        // 切换随机播放状态
+        public void ToggleShuffle()
+        {
+            IsShuffleEnabled = !IsShuffleEnabled;
+        }
+        // 循环切换播放模式
+        public void CyclePlayMode()
+        {
+            // 循环切换播放模式：顺序播放 -> 列表循环 -> 单曲循环 -> 顺序播放
+            PlayMode = PlayMode switch
+            {
+                PlaybackMode.Sequential => PlaybackMode.ListRepeat,
+                PlaybackMode.ListRepeat => PlaybackMode.SingleRepeat,
+                PlaybackMode.SingleRepeat => PlaybackMode.Sequential,
+                PlaybackMode.Random => PlaybackMode.ListRepeat, // 从随机模式切换到列表循环
+                _ => PlaybackMode.Sequential
+            };
         }
 
         private void UpdatePlayMode()
@@ -116,14 +186,28 @@ namespace Yee_Music.Models
                 {
                     case PlaybackMode.Sequential:
                         _mediaPlayer.IsLoopingEnabled = false;
+                        _isShuffleEnabled = false;
                         Debug.WriteLine("设置为顺序播放模式");
                         break;
                     case PlaybackMode.SingleRepeat:
                         _mediaPlayer.IsLoopingEnabled = true;
+                        _isShuffleEnabled = false;
                         Debug.WriteLine("设置为单曲循环模式");
                         break;
-                        // 其他模式的处理...
+                    case PlaybackMode.ListRepeat:
+                        _mediaPlayer.IsLoopingEnabled = false;
+                        _isShuffleEnabled = false;
+                        Debug.WriteLine("设置为列表循环模式");
+                        break;
+                    case PlaybackMode.Random:
+                        _mediaPlayer.IsLoopingEnabled = false;
+                        _isShuffleEnabled = true;
+                        Debug.WriteLine("设置为随机播放模式");
+                        break;
                 }
+
+                // 触发播放模式变更事件
+                PlayModeChanged?.Invoke(_playMode, _isShuffleEnabled);
             }
             catch (Exception ex)
             {
@@ -225,6 +309,19 @@ namespace Yee_Music.Models
             else
             {
                 _playMode = PlaybackMode.Sequential; // 默认值
+            }
+
+            // 从设置中加载随机播放状态
+            _isShuffleEnabled = _settings.IsShuffleEnabled;
+
+            // 确保播放模式和随机播放状态一致
+            if (_isShuffleEnabled && _playMode != PlaybackMode.Random)
+            {
+                _playMode = PlaybackMode.Random;
+            }
+            else if (!_isShuffleEnabled && _playMode == PlaybackMode.Random)
+            {
+                _playMode = PlaybackMode.Sequential;
             }
 
             // 从设置中加载音量

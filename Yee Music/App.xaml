@@ -20,6 +20,8 @@
             <converters:NonEmptyCollectionToVisibilityConverter x:Key="NonEmptyCollectionToVisibilityConverter"/>
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
             <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+            <converters:RandomIconConverter x:Key="RandomIconConverter"/>
+            <converters:RandomColorConverter x:Key="RandomColorConverter"/>
             <!-- Other app resources here -->
         </ResourceDictionary>
     </Application.Resources>
