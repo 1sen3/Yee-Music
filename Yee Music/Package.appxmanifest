@@ -4,8 +4,9 @@
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  IgnorableNamespaces="uap rescap">
+  IgnorableNamespaces="uap rescap uap3">
 
   <Identity
     Name="f1b656cf-5a3c-439f-a260-1f7b398da70a"
@@ -43,10 +44,21 @@
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
         <uap:LockScreen BadgeLogo="Assets\BadgeLogo.png" Notification="badge"/>
       </uap:VisualElements>
+      <Extensions>
+        <uap:Extension Category="windows.mediaPlayback">
+          <uap:MediaPlayback>
+            <uap:Codec Name="mp3"/>
+            <uap:Codec Name="flac"/>
+            <uap:Codec Name="wav"/>
+          </uap:MediaPlayback>
+        </uap:Extension>
+      </Extensions>
     </Application>
   </Applications>
 
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
+    <uap:Capability Name="musicLibrary"/>
+    <uap3:Capability Name="backgroundMediaPlayback"/>
   </Capabilities>
 </Package>

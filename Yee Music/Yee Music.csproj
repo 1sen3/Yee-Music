@@ -66,8 +66,9 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.2.250129-preview2" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.250129-preview2" />
-    <PackageReference Include="DevWinUI" Version="8.0.0-Preview5" />
+    <PackageReference Include="DevWinUI" Version="8.0.0-Preview8" />
     <PackageReference Include="DevWinUI.ContextMenu" Version="8.0.0-Preview6" />
+    <PackageReference Include="DevWinUI.Controls" Version="8.0.0-Preview8" />
     <PackageReference Include="FFmpeg.AutoGen" Version="7.0.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-preview.1.25080.5" />

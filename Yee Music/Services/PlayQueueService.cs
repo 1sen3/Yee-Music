@@ -156,41 +156,101 @@ namespace Yee_Music.Services
             SaveQueueToDatabaseAsync().ConfigureAwait(false);
         }
         // 获取下一首歌
-        public MusicInfo GetNext()
+        public MusicInfo GetNext(bool loopIfEnd = true)
         {
-            if (PlayQueue.Count == 0) return null;
-
-            CurrentIndex++;
-            if (CurrentIndex >= PlayQueue.Count)
+            try
             {
-                CurrentIndex = 0;
+                if (PlayQueue == null || PlayQueue.Count == 0)
+                {
+                    Debug.WriteLine("播放队列为空，无法获取下一首歌曲");
+                    return null;
+                }
+
+                // 计算下一个索引
+                int nextIndex = CurrentIndex + 1;
+                if (nextIndex >= PlayQueue.Count)
+                {
+                    // 如果不循环且已到列表末尾，则返回 null
+                    if (!loopIfEnd)
+                    {
+                        Debug.WriteLine("已到达播放列表末尾，且不循环播放");
+                        return null;
+                    }
+                    nextIndex = 0;
+                }
+
+                // 设置当前索引
+                CurrentIndex = nextIndex;
+
+                // 安全检查：确保当前索引有效
+                if (CurrentIndex >= 0 && CurrentIndex < PlayQueue.Count)
+                {
+                    Debug.WriteLine($"切换到下一首: {PlayQueue[CurrentIndex].Title}, 索引: {CurrentIndex}");
+
+                    // 保存到数据库
+                    SaveQueueToDatabaseAsync().ConfigureAwait(false);
+
+                    return PlayQueue[CurrentIndex];
+                }
+                else
+                {
+                    Debug.WriteLine($"下一首索引无效: {CurrentIndex}, 队列大小: {PlayQueue.Count}");
+                    // 重置索引到有效范围
+                    CurrentIndex = PlayQueue.Count > 0 ? 0 : -1;
+                    return CurrentIndex >= 0 ? PlayQueue[CurrentIndex] : null;
+                }
             }
-
-            Debug.WriteLine($"切换到下一首: {PlayQueue[CurrentIndex].Title}");
-
-            // 保存到数据库
-            SaveQueueToDatabaseAsync().ConfigureAwait(false);
-
-            return PlayQueue[CurrentIndex];
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"获取下一首歌曲时出错: {ex.Message}");
+                return null;
+            }
         }
 
         // 获取上一首歌
         public MusicInfo GetPrevious()
         {
-            if (PlayQueue.Count == 0) return null;
-
-            CurrentIndex--;
-            if (CurrentIndex < 0)
+            try
             {
-                CurrentIndex = PlayQueue.Count - 1;
+                if (PlayQueue == null || PlayQueue.Count == 0)
+                {
+                    Debug.WriteLine("播放队列为空，无法获取上一首歌曲");
+                    return null;
+                }
+
+                // 计算上一个索引
+                int prevIndex = CurrentIndex - 1;
+                if (prevIndex < 0)
+                {
+                    prevIndex = PlayQueue.Count - 1;
+                }
+                
+                // 设置当前索引
+                CurrentIndex = prevIndex;
+                
+                // 安全检查：确保当前索引有效
+                if (CurrentIndex >= 0 && CurrentIndex < PlayQueue.Count)
+                {
+                    Debug.WriteLine($"切换到上一首: {PlayQueue[CurrentIndex].Title}, 索引: {CurrentIndex}");
+                    
+                    // 保存到数据库
+                    SaveQueueToDatabaseAsync().ConfigureAwait(false);
+                    
+                    return PlayQueue[CurrentIndex];
+                }
+                else
+                {
+                    Debug.WriteLine($"上一首索引无效: {CurrentIndex}, 队列大小: {PlayQueue.Count}");
+                    // 重置索引到有效范围
+                    CurrentIndex = PlayQueue.Count > 0 ? PlayQueue.Count - 1 : -1;
+                    return CurrentIndex >= 0 ? PlayQueue[CurrentIndex] : null;
+                }
             }
-
-            Debug.WriteLine($"切换到上一首: {PlayQueue[CurrentIndex].Title}");
-
-            // 保存到数据库
-            SaveQueueToDatabaseAsync().ConfigureAwait(false);
-
-            return PlayQueue[CurrentIndex];
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"获取上一首歌曲时出错: {ex.Message}");
+                return null;
+            }
         }
 
         // 获取当前播放的歌曲

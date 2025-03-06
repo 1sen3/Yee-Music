@@ -6,7 +6,7 @@ using static Yee_Music.Models.MusicPlayer;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI;
 
-namespace Yee_Music.Helpers
+namespace Yee_Music.Converters
 {
     public class RandomIconConverter : IValueConverter
     {

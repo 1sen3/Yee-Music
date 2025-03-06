@@ -2,7 +2,7 @@
 using Microsoft.UI.Xaml.Data;
 using System;
 
-namespace Yee_Music.Helpers
+namespace Yee_Music.Converters
 {
     public class BoolToVisibilityConverter : IValueConverter
     {

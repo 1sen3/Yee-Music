@@ -35,6 +35,10 @@
                             IsBackButtonVisible="Collapsed"
                             SelectionChanged="Nav_SelectionChanged"
                             Grid.Row="1">
+                <NavigationView.AutoSuggestBox>
+                    <AutoSuggestBox QueryIcon="Find" AutomationProperties.Name="Search"
+                                    PlaceholderText="搜索音乐"/>
+                </NavigationView.AutoSuggestBox>
                 <NavigationView.MenuItems>
                     <NavigationViewItem x:Name="HomePage" Content="主页" Tag="Home">
                         <NavigationViewItem.Icon>

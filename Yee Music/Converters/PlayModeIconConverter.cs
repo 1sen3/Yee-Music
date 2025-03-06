@@ -1,7 +1,7 @@
 ﻿using Microsoft.UI.Xaml.Data;
 using System;
 
-namespace Yee_Music.Helpers;
+namespace Yee_Music.Converters;
 public class PlayPauseIconConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)

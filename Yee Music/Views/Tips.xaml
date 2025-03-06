@@ -15,6 +15,6 @@
             IsOpen="True"
             IsIconVisible="True"
             IsClosable="False"
-            Message="该页面尚在开发中。" />
+            Message="该页面尚在开发中" />
     </Grid>
 </Page>

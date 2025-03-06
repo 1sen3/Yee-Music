@@ -140,24 +140,16 @@ namespace Yee_Music.ViewModels
         }
         private void PlayMusic(MusicInfo music)
         {
-            if (music == null)
+            if (music == null || FavoriteMusicList == null || FavoriteMusicList.Count == 0)
                 return;
 
+            // 将整个收藏列表设置为播放队列
+            PlayQueueService.Instance.SetQueue(FavoriteMusicList, music);
+            
             // 播放选中的歌曲
             _player.PlayAsync(music);
-
-            // 如果歌曲不在播放队列中，添加到播放队列
-            if (!PlayQueueService.Instance.PlayQueue.Contains(music))
-            {
-                PlayQueueService.Instance.AddToQueue(music);
-            }
-
-            // 更新播放列表服务中的当前索引
-            int index = PlayQueueService.Instance.PlayQueue.IndexOf(music);
-            if (index >= 0)
-            {
-                PlayQueueService.Instance.SetCurrentIndex(index);
-            }
+            
+            Debug.WriteLine($"将喜欢列表({FavoriteMusicList.Count}首歌曲)设置为播放队列，开始播放: {music.Title}");
         }
 
         private async void RemoveFavorite(MusicInfo music)

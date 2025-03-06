@@ -21,6 +21,7 @@ namespace Yee_Music.ViewModels
         private readonly MusicPlayer _player;
         private MusicInfo _currentMusic;
         private PlayQueueService _playQueueService;
+        //private readonly SystemMediaTransportControlsService _smtcService;
         private bool _isPlaying;
         private double _progress;
         private double _volume;
@@ -130,6 +131,10 @@ namespace Yee_Music.ViewModels
         {
             _settings = AppSettings.Instance; // 使用单例实例
 
+            // 初始化 DispatcherQueue
+            _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+
+
             // 将字符串转换为枚举类型再比较
             _isRepeatEnabled = Enum.TryParse(_settings.PlayMode, out PlaybackMode mode) &&
                                mode == PlaybackMode.SingleRepeat;
@@ -139,6 +144,9 @@ namespace Yee_Music.ViewModels
 
             // 初始化 PlayQueueService
             _playQueueService = PlayQueueService.Instance;
+
+            // 获取 SMTC 服务实例
+            //_smtcService = SystemMediaTransportControlsService.Instance;
 
             // 初始化当前状态
             _currentMusic = _player.CurrentMusic;  // 直接设置字段
@@ -210,13 +218,30 @@ namespace Yee_Music.ViewModels
 
         private void OnCurrentMusicChanged(MusicInfo music)
         {
-            CurrentMusic = music;  // 使用属性而不是字段
-            Debug.WriteLine($"Current music changed to: {music?.Title ?? "null"}");  // 添加日志
-                                                                                     // 确保播放模式与播放器同步
-            PlayMode = _player.PlayMode;
+            // 使用DispatcherQueue确保在UI线程上更新UI
+            _dispatcherQueue.TryEnqueue(() => 
+            {
+                try
+                {
+                    Debug.WriteLine($"在UI线程上更新CurrentMusic: {music?.Title ?? "null"}");
+                    
+                    // 设置当前音乐属性
+                    if (music != _currentMusic)  // 只在实际变化时更新，避免循环引用
+                    {
+                        CurrentMusic = music;  // 使用属性而不是字段
+                    }
+                    
+                    // 确保播放模式与播放器同步
+                    PlayMode = _player.PlayMode;
 
-            // 触发专辑封面更新事件
-            AlbumArtChanged?.Invoke(music);
+                    // 不要在这里触发AlbumArtChanged，因为CurrentMusic的setter已经会触发
+                    // AlbumArtChanged?.Invoke(music);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"更新CurrentMusic时出错: {ex.Message}");
+                }
+            });
         }
         private void UpdateTimeText(TimeSpan position)
         {
@@ -238,14 +263,47 @@ namespace Yee_Music.ViewModels
             get => _currentMusic;
             set
             {
-                if (SetProperty(ref _currentMusic, value))
+                try
                 {
-                    // 触发相关属性更新
-                    OnPropertyChanged(nameof(CurrentMusic));
-                    UpdateTimeText(_currentTime);
+                    // 检查是否在UI线程上
+                    if (DispatcherQueue.GetForCurrentThread() != _dispatcherQueue)
+                    {
+                        // 如果不在UI线程上，则切换到UI线程
+                        Debug.WriteLine("警告：在非UI线程上尝试设置CurrentMusic，正在切换到UI线程");
+                        _dispatcherQueue.TryEnqueue(() => CurrentMusic = value);
+                        return;
+                    }
+                    
+                    // 如果在UI线程上，正常处理
+                    if (SetProperty(ref _currentMusic, value))
+                    {
+                        try
+                        {
+                            // 触发相关属性更新
+                            OnPropertyChanged(nameof(CurrentMusic));
+                            UpdateTimeText(_currentTime);
 
-                    // 触发专辑封面更新事件
-                    AlbumArtChanged?.Invoke(value);
+                            // 触发专辑封面更新事件（确保value不为null时才调用）
+                            if (value != null)
+                            {
+                                AlbumArtChanged?.Invoke(value);
+                            }
+                            else
+                            {
+                                Debug.WriteLine("警告: 尝试设置CurrentMusic为null");
+                                // 可以选择在这里触发一个特殊的事件来清除专辑封面
+                                AlbumArtChanged?.Invoke(null); // 传递null以清除专辑封面
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"更新CurrentMusic相关属性时出错: {ex.Message}");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"设置CurrentMusic时发生异常: {ex.Message}");
                 }
             }
         }
@@ -261,9 +319,26 @@ namespace Yee_Music.ViewModels
             get => _progress;
             set
             {
-                if (SetProperty(ref _progress, value))
+                try
                 {
-                    _player.SetPosition(TimeSpan.FromSeconds(value));
+                    // 检查是否在UI线程上
+                    if (DispatcherQueue.GetForCurrentThread() != _dispatcherQueue)
+                    {
+                        // 如果不在UI线程上，则切换到UI线程
+                        Debug.WriteLine("警告：在非UI线程上尝试设置Progress，正在切换到UI线程");
+                        _dispatcherQueue.TryEnqueue(() => Progress = value);
+                        return;
+                    }
+                    
+                    // 在UI线程上执行
+                    if (SetProperty(ref _progress, value))
+                    {
+                        _player.SetPosition(TimeSpan.FromSeconds(value));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"设置Progress时发生异常: {ex.Message}");
                 }
             }
         }
@@ -323,61 +398,43 @@ namespace Yee_Music.ViewModels
             }
         }
 
-        private void PlayNext()
+        private async void PlayNext()
         {
-            MusicInfo nextMusic = null;
-
-            // 根据播放模式选择下一首歌曲
-            if (_player.PlayMode == PlaybackMode.Random && IsShuffleEnabled)
+            try
             {
-                // 随机模式下，获取随机歌曲
-                nextMusic = PlayQueueService.Instance.GetRandom();
-            }
-            else
-            {
-                // 其他模式下，获取下一首歌曲
-                nextMusic = PlayQueueService.Instance.GetNext();
-
-                // 如果到达列表末尾且是列表循环模式，则从头开始播放
-                if (nextMusic == null && _player.PlayMode == PlaybackMode.ListRepeat)
+                bool success = await _player.PlayNextAsync();
+                
+                if (success)
                 {
-                    PlayQueueService.Instance.ResetPosition();
-                    nextMusic = PlayQueueService.Instance.GetNext();
+                    // 手动更新播放状态为播放
+                    IsPlaying = true;
+                    OnPropertyChanged(nameof(IsPlaying));
+                    Debug.WriteLine("播放状态已更新为播放");
                 }
             }
-
-            if (nextMusic != null)
+            catch (Exception ex)
             {
-                _player.PlayAsync(nextMusic);
+                Debug.WriteLine($"播放下一首歌曲时出错: {ex.Message}");
             }
         }
 
-        private void PlayPrevious()
+        private async void PlayPrevious()
         {
-            MusicInfo previousMusic = null;
-
-            // 根据播放模式选择上一首歌曲
-            if (_player.PlayMode == PlaybackMode.Random && IsShuffleEnabled)
+            try
             {
-                // 随机模式下，获取随机歌曲
-                previousMusic = PlayQueueService.Instance.GetRandom();
-            }
-            else
-            {
-                // 其他模式下，获取上一首歌曲
-                previousMusic = PlayQueueService.Instance.GetPrevious();
-
-                // 如果到达列表开头且是列表循环模式，则从末尾开始播放
-                if (previousMusic == null && _player.PlayMode == PlaybackMode.ListRepeat)
+                bool success = await _player.PlayPreviousAsync();
+                
+                if (success)
                 {
-                    PlayQueueService.Instance.SetPositionToLast();
-                    previousMusic = PlayQueueService.Instance.GetCurrent();
+                    // 手动更新播放状态为播放
+                    IsPlaying = true;
+                    OnPropertyChanged(nameof(IsPlaying));
+                    Debug.WriteLine("播放状态已更新为播放");
                 }
             }
-
-            if (previousMusic != null)
+            catch (Exception ex)
             {
-                _player.PlayAsync(previousMusic);
+                Debug.WriteLine($"播放上一首歌曲时出错: {ex.Message}");
             }
         }
 
@@ -385,10 +442,13 @@ namespace Yee_Music.ViewModels
         {
             try
             {
-                IsPlaying = isPlaying;
-                // 确保属性变更通知被触发
-                OnPropertyChanged(nameof(IsPlaying));
-                Debug.WriteLine($"播放状态已更改为: {isPlaying}");
+                // 使用 DispatcherQueue 确保在 UI 线程上更新属性
+                _dispatcherQueue.TryEnqueue(() =>
+                {
+                    IsPlaying = isPlaying;
+                    OnPropertyChanged(nameof(IsPlaying));
+                    Debug.WriteLine($"播放状态已更新为: {(isPlaying ? "播放" : "暂停")}");
+                });
             }
             catch (Exception ex)
             {
@@ -400,13 +460,24 @@ namespace Yee_Music.ViewModels
         {
             try
             {
-                _currentTime = position;
-                Progress = position.TotalSeconds;
-                UpdateTimeText(position);
+                // 使用DispatcherQueue确保在UI线程上更新UI
+                _dispatcherQueue.TryEnqueue(() =>
+                {
+                    try
+                    {
+                        _currentTime = position;
+                        Progress = position.TotalSeconds;
+                        UpdateTimeText(position);
 
-                // 确保属性变更通知被触发
-                OnPropertyChanged(nameof(Progress));
-                OnPropertyChanged(nameof(CurrentTimeText));
+                        // 确保属性变更通知被触发
+                        OnPropertyChanged(nameof(Progress));
+                        OnPropertyChanged(nameof(CurrentTimeText));
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"在UI线程上更新进度时出错: {ex.Message}");
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -469,11 +540,34 @@ namespace Yee_Music.ViewModels
 
             Debug.WriteLine($"播放模式已更改为: {mode}, 随机播放: {_isShuffleEnabled}");
         }
-        private async void OnPlaybackCompleted()
+        private void OnPlaybackCompleted()
         {
-            if (IsRepeatEnabled && CurrentMusic != null)
+            try
             {
-                await _player.PlayAsync(CurrentMusic);
+                // 在UI线程上检查状态
+                _dispatcherQueue.TryEnqueue(async () =>
+                {
+                    try
+                    {
+                        if (IsRepeatEnabled && CurrentMusic != null)
+                        {
+                            Debug.WriteLine("播放完成，由于启用了重复播放，正在重新播放当前歌曲");
+                            await _player.PlayAsync(CurrentMusic);
+                        }
+                        else
+                        {
+                            Debug.WriteLine("播放完成，继续播放队列中的下一首");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"在UI线程上处理播放完成时出错: {ex.Message}");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"处理播放完成事件时出错: {ex.Message}");
             }
         }
         private async void ToggleFavorite(MusicInfo music)

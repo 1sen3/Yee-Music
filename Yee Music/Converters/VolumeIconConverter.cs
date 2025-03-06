@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml.Data;
 
-namespace Yee_Music.Helpers
+namespace Yee_Music.Converters
 {
     public class VolumeIconConverter : IValueConverter
     {

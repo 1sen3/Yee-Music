@@ -45,35 +45,60 @@ namespace Yee_Music
         private int _welcomePageIndex = 0;
         public MainWindow()
         {
-            this.InitializeComponent();
-
-            string iconpath = GetAssetsPath("Icon.ico");
-            AppWindow.SetIcon(iconpath);
-            this.ExtendsContentIntoTitleBar = true;
-            AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
-            AppWindow.TitleBar.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;
-
-            settings = new UISettings();
-       
-            ShellFrame.Content = new ShellPage();
-            PlayerBarFrame.Content = new PlayerBarPage();
-            HWND = WindowNative.GetWindowHandle(this);
-
-            // 加载保存的设置并应用
-            LoadAndApplySettings();
-
-            // 初始化ViewModel
-            MainWindowViewModel.Instance.Initialize(this, HWND);
-
-            // 如果需要显示欢迎对话框，延迟执行
-            if (MainWindowViewModel.Instance.ShouldShowWelcomeDialog())
+            try
             {
-                DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Normal, async () =>
+                this.InitializeComponent();
+
+                // 设置窗口图标和标题栏
+                string iconpath = GetAssetsPath("Icon.ico");
+                AppWindow.SetIcon(iconpath);
+                this.ExtendsContentIntoTitleBar = true;
+                AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
+                AppWindow.TitleBar.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;
+
+                // 获取窗口句柄 - 这应该尽早完成
+                HWND = WindowNative.GetWindowHandle(this);
+
+                // 加载设置
+                LoadAndApplySettings();
+
+                // 初始化UI设置
+                settings = new UISettings();
+
+                // 使用简单的占位内容
+                ShellFrame.Content = new ShellPage();
+                PlayerBarFrame.Content = new PlayerBarPage();
+
+                // 初始化ViewModel - 这应该在内容加载前完成
+                MainWindowViewModel.Instance.Initialize(this, HWND);
+
+
+                // 如果需要显示欢迎对话框，延迟执行
+                if (MainWindowViewModel.Instance.ShouldShowWelcomeDialog())
                 {
-                    // 给窗口一些时间完成初始化
-                    await Task.Delay(500);
-                    await MainWindowViewModel.Instance.ShowWelcomeDialogAsync(this.Content.XamlRoot);
-                });
+                    DispatcherTimer welcomeTimer = new DispatcherTimer();
+                    welcomeTimer.Interval = TimeSpan.FromMilliseconds(2000);
+                    welcomeTimer.Tick += async (s, e) =>
+                    {
+                        welcomeTimer.Stop();
+                        try
+                        {
+                            await MainWindowViewModel.Instance.ShowWelcomeDialogAsync(this.Content.XamlRoot);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"显示欢迎对话框时出错: {ex.Message}");
+                        }
+                    };
+                    welcomeTimer.Start();
+                }
+
+                System.Diagnostics.Debug.WriteLine("MainWindow 构造函数执行完成");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"MainWindow 初始化时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"堆栈跟踪: {ex.StackTrace}");
             }
         }
         public static string GetAssetsPath(string fileName)

@@ -25,6 +25,7 @@ using System.Diagnostics;
 using Yee_Music.Services;
 using Windows.System;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using CommunityToolkit.WinUI;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -64,31 +65,63 @@ namespace Yee_Music
         /// Invoked when the application is launched.
         /// </summary>
         /// <param name="args">Details about the launch request and process.</param>
-        protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
-            // 确保在激活窗口前应用设置
-            AppSettings settings = AppSettings.Load();
-            System.Diagnostics.Debug.WriteLine($"应用启动时读取的主题设置: {settings.ThemeSetting}");
-            System.Diagnostics.Debug.WriteLine($"应用启动时读取的窗口材质设置: {settings.WindowMaterial}");
-            // 确保数据库服务已初始化
-            var databaseService = Services.GetService<DatabaseService>();
-            var playQueueService = PlayQueueService.Instance;
-            await playQueueService.InitializeAsync();
-            // 始终创建MainWindow
-            MainWindow = new MainWindow();
+            try
+            {
+                // 先加载必要的设置
+                AppSettings settings = AppSettings.Load();
+                System.Diagnostics.Debug.WriteLine($"应用启动时读取的主题设置: {settings.ThemeSetting}");
+                System.Diagnostics.Debug.WriteLine($"应用启动时读取的窗口材质设置: {settings.WindowMaterial}");
 
-            // 在窗口创建后初始化 ThemeService
-            ThemeService.Initialize(MainWindow);
+                // 创建主窗口
+                MainWindow = new MainWindow();
+                if (MainWindow == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("错误：MainWindow 创建失败");
+                    return;
+                }
 
-            MainWindow.Activate();
+                // 在窗口创建后初始化 ThemeService
+                ThemeService.Initialize(MainWindow);
 
-            // 注册内存压力事件
-            MemoryManager.AppMemoryUsageLimitChanging += MemoryManager_AppMemoryUsageLimitChanging;
-            MemoryManager.AppMemoryUsageIncreased += MemoryManager_AppMemoryUsageIncreased;
+                // 注册窗口关闭事件
+                MainWindow.Closed += Window_Closed;
 
-            await CoverImageCacheService.InitializeAsync();
+                // 激活窗口 - 这是显示窗口的关键步骤
+                MainWindow.Activate();
+                System.Diagnostics.Debug.WriteLine("窗口已激活");
 
-            App.MainWindow.Closed += Window_Closed;
+                // 所有其他初始化操作移到后台任务中，但不要阻塞UI线程
+                DispatcherQueue dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+                dispatcherQueue.TryEnqueue(async () =>
+                {
+                    try
+                    {
+                        // 确保数据库服务已初始化
+                        var databaseService = Services.GetService<DatabaseService>();
+                        var playQueueService = PlayQueueService.Instance;
+                        await playQueueService.InitializeAsync();
+
+                        // 注册内存压力事件
+                        MemoryManager.AppMemoryUsageLimitChanging += MemoryManager_AppMemoryUsageLimitChanging;
+                        MemoryManager.AppMemoryUsageIncreased += MemoryManager_AppMemoryUsageIncreased;
+
+                        await CoverImageCacheService.InitializeAsync();
+
+                        System.Diagnostics.Debug.WriteLine("SMTC 服务已创建，等待第一次播放时初始化");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"后台初始化过程中出错: {ex.Message}");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"应用启动过程中出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"堆栈跟踪: {ex.StackTrace}");
+            }
         }
         private void Window_Closed(object sender, WindowEventArgs args)
         {
@@ -135,12 +168,12 @@ namespace Yee_Music
 
             // 注册数据库服务
             services.AddSingleton<DatabaseService>();
+
             // 注册服务
             services.AddSingleton<LibraryViewModel>();
             services.AddSingleton<MusicPlayer>();
             services.AddSingleton<AppSettings>();
             services.AddSingleton<PlayerBarViewModel>();
-            // 注册 ThemeService 到依赖注入容器
             services.AddSingleton<ThemeService>(ThemeService.Instance);
             services.AddSingleton<PlayQueueViewModel>();
             services.AddSingleton<FavoriteSongsViewModel>();

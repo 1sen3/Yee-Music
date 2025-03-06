@@ -7,6 +7,7 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:devcontrols="using:DevWinUI"
     mc:Ignorable="d">
 
     <Grid>
@@ -19,44 +20,50 @@
         </Grid.ColumnDefinitions>
         <!-- 歌曲信息 -->
         <StackPanel Grid.Column="0" 
-            x:Name="PlayBar_NowPlaying" 
-            Orientation="Horizontal" 
-            Spacing="20"
-            Padding="16">
+                    x:Name="PlayBar_NowPlaying" 
+                    Orientation="Horizontal" 
+                    Spacing="20"
+                    Padding="16">
             <!-- 歌曲封面 -->
             <Button x:Name="PlayBar_MusicButton"
-            Width="50"
-            Height="50"
-            CornerRadius="8"
-            Padding="0">
+                    Width="50"
+                    Height="50"
+                    CornerRadius="8"
+                    Padding="0">
                 <Image x:Name="ControllerCover"
-               Width="50"
-               Height="50"
-               Stretch="UniformToFill"/>
+                       Width="50"
+                       Height="50"
+                       Stretch="UniformToFill"/>
             </Button>
             <!-- 歌名、歌手名 -->
-            <StackPanel Orientation="Vertical"
-                VerticalAlignment="Center"
-                x:Name="MusicName"
-                Spacing="5"
-                Width="65">
-                <!-- 将宽度改为与MaxWidth一致 -->
-
-                <!-- 歌曲名称 -->
-                <TextBlock x:Name="SongName"
-                   Text="{Binding CurrentMusic.Title, FallbackValue='未播放'}"
-                   FontSize="12"
-                   FontWeight="Bold"
-                   TextTrimming="CharacterEllipsis"
-                   TextWrapping="NoWrap"/>
-                <!-- 歌手名称 -->
-                <TextBlock x:Name="SingerName"
-                   Text="{Binding CurrentMusic.Artist, FallbackValue='未知艺术家'}"
-                   FontSize="12"
-                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                   TextTrimming="CharacterEllipsis"
-                   TextWrapping="NoWrap"/>
-            </StackPanel>
+            <devcontrols:AutoScrollView MaxWidth="65" VerticalAlignment="Center">
+                <StackPanel Orientation="Vertical"
+                            VerticalAlignment="Center"
+                            x:Name="MusicName"
+                            Spacing="5"
+                            Width="65">
+                    <!-- 歌曲名称 -->
+                    <devcontrols:AutoScrollView MaxWidth="65"
+                                                Width="65">
+                        <TextBlock x:Name="SongName"
+                               Text="{Binding CurrentMusic.Title, FallbackValue='未播放'}"
+                               FontSize="12"
+                               FontWeight="Bold"
+                               TextTrimming="CharacterEllipsis"
+                               TextWrapping="NoWrap"/>
+                    </devcontrols:AutoScrollView>
+                    <!-- 歌手名称 -->
+                    <devcontrols:AutoScrollView MaxWidth="65"
+                                                Width="65">
+                        <TextBlock x:Name="SingerName"
+                                   Text="{Binding CurrentMusic.Artist, FallbackValue='未知艺术家'}"
+                                   FontSize="12"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextTrimming="CharacterEllipsis"
+                                   TextWrapping="NoWrap"/>
+                    </devcontrols:AutoScrollView>
+                </StackPanel>
+            </devcontrols:AutoScrollView>
         </StackPanel>
         <!-- 控制按钮 -->
         <StackPanel Orientation="Horizontal" 

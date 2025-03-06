@@ -66,6 +66,35 @@ namespace Yee_Music.Models
                 }
             }
         }
+        
+        // 添加多选支持
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set => SetProperty(ref _isSelected, value);
+        }
+        public bool HasEmbeddedArt
+        {
+            get
+            {
+                try
+                {
+                    if (string.IsNullOrEmpty(FilePath))
+                        return false;
+
+                    using (var file = TagLib.File.Create(FilePath))
+                    {
+                        return file.Tag.Pictures != null && file.Tag.Pictures.Length > 0;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"检查专辑封面时出错: {ex.Message}");
+                    return false;
+                }
+            }
+        }
         public static async Task<MusicInfo> CreateFromFileAsync(string filePath)
         {
             var file = new MusicInfo { FilePath = filePath };
@@ -98,20 +127,20 @@ namespace Yee_Music.Models
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"加载专辑封面: {FilePath}");
+                Debug.WriteLine($"加载专辑封面: {FilePath}");
+                if (!HasEmbeddedArt)
+                    return null;
+
                 using (var file = TagLib.File.Create(FilePath))
                 {
-                    if (file.Tag.Pictures.Length > 0)
-                    {
-                        return file.Tag.Pictures[0].Data.Data;
-                    }
+                    return file.Tag.Pictures[0].Data.Data;
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"加载专辑封面出错: {ex.Message}");
+                Debug.WriteLine($"加载专辑封面出错: {ex.Message}");
+                return null;
             }
-            return null;
         }
     }
 }

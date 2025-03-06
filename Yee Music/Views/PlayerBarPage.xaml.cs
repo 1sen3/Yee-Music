@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage.Streams;
 using Yee_Music.Controls;
+using System.Diagnostics;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -63,20 +64,30 @@ namespace Yee_Music.Pages
         // 添加专辑封面更新事件处理方法
         private void OnAlbumArtChanged(MusicInfo music)
         {
-            UpdateAlbumArt(music);
+            try
+            {
+                UpdateAlbumArt(music);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"处理专辑封面更新事件时出错: {ex.Message}");
+                // 确保UI不会因为异常而崩溃
+                ControllerCover.Source = null;
+            }
         }
 
         // 添加更新专辑封面的方法
         private async void UpdateAlbumArt(MusicInfo music)
         {
-            if (music == null)
-            {
-                ControllerCover.Source = null;
-                return;
-            }
-
             try
             {
+                if (music == null)
+                {
+                    ControllerCover.Source = null;
+                    Debug.WriteLine("清除专辑封面 (music为null)");
+                    return;
+                }
+
                 // 获取专辑封面数据
                 byte[] albumArtData = music.AlbumArt;
 
@@ -88,37 +99,24 @@ namespace Yee_Music.Pages
                     if (optimizedImage != null)
                     {
                         ControllerCover.Source = optimizedImage;
-                        System.Diagnostics.Debug.WriteLine("已加载优化后的专辑封面");
+                        Debug.WriteLine("已更新专辑封面");
                     }
                     else
                     {
-                        // 如果优化失败，尝试直接加载
-                        var bitmap = new BitmapImage();
-                        using (var stream = new InMemoryRandomAccessStream())
-                        {
-                            using (var writer = new DataWriter(stream.GetOutputStreamAt(0)))
-                            {
-                                writer.WriteBytes(albumArtData);
-                                await writer.StoreAsync();
-                            }
-                            await bitmap.SetSourceAsync(stream);
-                        }
-                        ControllerCover.Source = bitmap;
-                        System.Diagnostics.Debug.WriteLine("已加载原始专辑封面");
+                        ControllerCover.Source = null;
+                        Debug.WriteLine("无法优化专辑封面图片");
                     }
                 }
                 else
                 {
-                    // 没有专辑封面，显示默认图片
-                    ControllerCover.Source = new BitmapImage(new Uri("ms-appx:///Assets/DefaultAlbumArt.png"));
-                    System.Diagnostics.Debug.WriteLine("使用默认专辑封面");
+                    ControllerCover.Source = null;
+                    Debug.WriteLine("歌曲没有专辑封面数据");
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"更新专辑封面时出错: {ex.Message}");
-                // 出错时显示默认图片
-                ControllerCover.Source = new BitmapImage(new Uri("ms-appx:///Assets/DefaultAlbumArt.png"));
+                Debug.WriteLine($"更新专辑封面时出错: {ex.Message}");
+                ControllerCover.Source = null;
             }
         }
         private void PlayQueueFlyout_Opening(object sender, object e)

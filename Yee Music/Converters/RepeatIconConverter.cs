@@ -4,7 +4,7 @@ using Yee_Music.ViewModels;
 using Yee_Music.Models;
 using static Yee_Music.Models.MusicPlayer;
 
-namespace Yee_Music.Helpers
+namespace Yee_Music.Converters
 {
     public class PlayModeIconConverter : IValueConverter
     {

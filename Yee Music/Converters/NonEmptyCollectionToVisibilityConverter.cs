@@ -3,7 +3,7 @@ using Microsoft.UI.Xaml.Data;
 using System;
 using System.Collections;
 
-namespace Yee_Music.Helpers
+namespace Yee_Music.Converters
 {
     public class NonEmptyCollectionToVisibilityConverter : IValueConverter
     {

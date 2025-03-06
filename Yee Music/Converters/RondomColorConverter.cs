@@ -4,7 +4,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 
-namespace Yee_Music.Helpers
+namespace Yee_Music.Converters
 {
     public class RandomColorConverter : IValueConverter
     {
