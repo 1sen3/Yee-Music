@@ -27,14 +27,17 @@ A local music player based on WinUI 3.
 4. 优化播放栏内歌曲名的显示效果
 	Optimized the display effect of song names in the playback bar.
 ## 界面展示 Interface Showcase
-![1](https://github.com/user-attachments/assets/5727ffab-1503-4fa1-9fd8-b0fd0a99b5c1)
-![2](https://github.com/user-attachments/assets/95e8f8f3-2dc6-46bf-b410-2dd47013c1fc)
-![3](https://github.com/user-attachments/assets/f63a7642-3263-4450-b20d-2b9c66f35096)
-![4](https://github.com/user-attachments/assets/a349c5f9-abbc-4963-865a-57f9e51facdc)
-![5](https://github.com/user-attachments/assets/59ea9dac-3d08-4dd7-8f8e-0d58f9f87b95)
-![6](https://github.com/user-attachments/assets/6e41ac72-085a-4bf7-afd7-3df5dcb946d8)
-![7](https://github.com/user-attachments/assets/4e9e29cd-2133-4795-bc98-b00c223388fe)
-![8](https://github.com/user-attachments/assets/46aa4ad6-7eaa-479e-950f-5a55a6ff2fe5)
+![1](https://github.com/user-attachments/assets/e480b8c0-fb5b-44ac-9362-86d54df8ffd9)
+![2](https://github.com/user-attachments/assets/f0b9333b-163f-40e0-83c7-2296ba3ee370)
+![3](https://github.com/user-attachments/assets/f3d8b41c-6781-4409-aa59-414d092a6d64)
+![4](https://github.com/user-attachments/assets/b81dfecd-8398-4477-bcaa-14fcc3c79b85)
+![5](https://github.com/user-attachments/assets/638ddbb2-611f-4950-a4b5-956f486225cf)
+![6](https://github.com/user-attachments/assets/84d919c3-41fc-4319-8add-93000a375cc0)
+![7](https://github.com/user-attachments/assets/083b83e6-a95f-4a59-9968-a76a61e03344)
+![8](https://github.com/user-attachments/assets/7c89f9a3-48c6-49d1-9b2e-83904d061cae)
+
+
+
 ### 开发者 Developer
 1SenzZ2 - 2818634977@qq.com
 ### 鸣谢 Acknowledgements
