@@ -20,7 +20,7 @@ using Yee_Music.Services;
 
 namespace Yee_Music.Models
 {
-    public class MusicInfo:ObservableObject
+    public class MusicInfo : ObservableObject
     {
         public string Title { get; set; }
         public string Artist { get; set; }
@@ -66,7 +66,7 @@ namespace Yee_Music.Models
                 }
             }
         }
-        
+
         // 添加多选支持
         private bool _isSelected;
         public bool IsSelected

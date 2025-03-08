@@ -61,6 +61,15 @@ namespace Yee_Music
 
         }
 
+        // 在App类中添加ThemeChanged事件
+        public event EventHandler<Windows.UI.Color> ThemeChanged;
+
+        // 添加触发ThemeChanged事件的方法
+        internal void OnThemeChanged(Windows.UI.Color accentColor)
+        {
+            ThemeChanged?.Invoke(this, accentColor);
+        }
+
         /// <summary>
         /// Invoked when the application is launched.
         /// </summary>

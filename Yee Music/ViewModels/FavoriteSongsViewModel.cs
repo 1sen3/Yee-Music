@@ -42,7 +42,6 @@ namespace Yee_Music.ViewModels
             {
                 if (SetProperty(ref _favoriteMusicList, value))
                 {
-                    // 当收藏列表变化时，通知 IsFavoriteEmpty 属性也可能变化
                     OnPropertyChanged(nameof(IsFavoriteEmpty));
                 }
             }
@@ -64,27 +63,21 @@ namespace Yee_Music.ViewModels
             _player = player;
             _databaseService = App.Services.GetService<DatabaseService>();
 
-            // 使用AsyncRelayCommand替代RelayCommand
             RefreshCommand = new AsyncRelayCommand(LoadFavoriteSongsAsync);
             PlayMusicCommand = new RelayCommand<MusicInfo>(PlayMusic);
             RemoveFavoriteCommand = new RelayCommand<MusicInfo>(RemoveFavorite);
 
-            // 初始化时加载喜欢的歌曲
             _ = LoadFavoriteSongsAsync();
 
-            // 订阅播放器当前音乐变化事件，用于更新UI
             _player.CurrentMusicChanged += OnCurrentMusicChanged;
 
-            // 订阅喜欢状态变化事件
             PlayerBarViewModel.FavoriteStatusChanged += OnFavoriteStatusChanged;
         }
 
         private void OnCurrentMusicChanged(MusicInfo music)
         {
-            // 当前音乐变化时，检查是否需要更新喜欢状态
             if (music != null)
             {
-                // 刷新列表以反映最新状态
                 _ = LoadFavoriteSongsAsync();
             }
         }
@@ -95,21 +88,17 @@ namespace Yee_Music.ViewModels
             {
                 IsLoading = true;
 
-                // 从数据库加载喜欢的歌曲
                 if (_databaseService != null)
                 {
                     var favorites = await _databaseService.GetFavoriteMusicAsync();
 
-                    // 清空并添加新的收藏歌曲
                     FavoriteMusicList.Clear();
                     foreach (var music in favorites)
                     {
-                        // 确保封面图片已加载
                         if (music.AlbumArt == null && !string.IsNullOrEmpty(music.FilePath))
                         {
                             try
                             {
-                                // 尝试加载封面
                                 music.AlbumArt = music.LoadAlbumArt();
                             }
                             catch (Exception ex)
@@ -143,10 +132,8 @@ namespace Yee_Music.ViewModels
             if (music == null || FavoriteMusicList == null || FavoriteMusicList.Count == 0)
                 return;
 
-            // 将整个收藏列表设置为播放队列
             PlayQueueService.Instance.SetQueue(FavoriteMusicList, music);
             
-            // 播放选中的歌曲
             _player.PlayAsync(music);
             
             Debug.WriteLine($"将喜欢列表({FavoriteMusicList.Count}首歌曲)设置为播放队列，开始播放: {music.Title}");
@@ -158,25 +145,21 @@ namespace Yee_Music.ViewModels
 
             try
             {
-                // 更新数据库
                 if (_databaseService != null)
                 {
                     await _databaseService.UpdateFavoriteStatusAsync(music.FilePath, false);
                     Debug.WriteLine($"已将歌曲 {music.Title} 从喜欢列表中移除");
                 }
 
-                // 从列表中移除
                 FavoriteMusicList.Remove(music);
                 OnPropertyChanged(nameof(IsFavoriteEmpty));
-                // 如果当前正在播放的是这首歌，也更新其状态
                 if (_player.CurrentMusic?.FilePath == music.FilePath)
                 {
                     _player.CurrentMusic.IsFavorite = false;
-                    // 触发事件通知其他地方更新
+
                     PlayerBarViewModel.OnFavoriteStatusChanged(_player.CurrentMusic);
                 }
 
-                // 更新UI状态
                 if (FavoriteMusicList.Count == 0)
                 {
                     LoadingState = LoadingState.Empty;
@@ -190,15 +173,12 @@ namespace Yee_Music.ViewModels
 
         private void OnFavoriteStatusChanged(object sender, MusicInfo music)
         {
-            // 当喜欢状态变化时刷新列表
             _ = LoadFavoriteSongsAsync();
 
-            // 检查是否需要添加或移除歌曲
             if (music != null)
             {
                 if (music.IsFavorite)
                 {
-                    // 如果歌曲被添加到收藏，但不在列表中，则添加
                     if (!FavoriteMusicList.Any(m => m.FilePath == music.FilePath))
                     {
                         FavoriteMusicList.Add(music);
@@ -207,7 +187,6 @@ namespace Yee_Music.ViewModels
                 }
                 else
                 {
-                    // 如果歌曲从收藏中移除，但仍在列表中，则移除
                     var itemToRemove = FavoriteMusicList.FirstOrDefault(m => m.FilePath == music.FilePath);
                     if (itemToRemove != null)
                     {
@@ -223,6 +202,5 @@ namespace Yee_Music.ViewModels
             _player.CurrentMusicChanged -= OnCurrentMusicChanged;
             PlayerBarViewModel.FavoriteStatusChanged -= OnFavoriteStatusChanged;
         }
-
     }
 }

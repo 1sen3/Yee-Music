@@ -55,13 +55,18 @@
             <controls:MusicListControl 
                 x:Name="MusicList"
                 MusicList="{x:Bind ViewModel.PlayQueue, Mode=OneWay}"
-                PlayCommand="{x:Bind ViewModel.PlayMusicCommand}"
                 ShowEmptyState="{x:Bind ViewModel.IsQueueEmpty, Mode=OneWay}"
                 EmptyStateIcon="&#xE8FD;"
                 EmptyStateTitle="播放队列为空"
                 EmptyStateDescription="当前没有正在播放的歌曲"
                 PropertiesClick="MusicList_PropertiesClick"
+                ShowPlayMenuItem="True"
+                ShowAddToPlaylistMenuItem="False"
                 ShowRemoveFromQueueMenuItem="True"
+                ShowAddToFavoriteMenuItem="True"
+                ShowRemoveFromFavoriteMenuItem="False"
+                ShowPropertiesMenuItem="True"
+                PlayCommand="{x:Bind ViewModel.PlayMusicCommand}"       
                 RemoveFromQueueCommand="{x:Bind ViewModel.RemoveMusicCommand}"/>
         </Grid>
     </Grid>

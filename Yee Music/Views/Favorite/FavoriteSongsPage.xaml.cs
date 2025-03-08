@@ -16,14 +16,8 @@ using Yee_Music.ViewModels;
 using Yee_Music.Models;
 using Yee_Music.Controls;
 
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
-
 namespace Yee_Music.Pages
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
     public sealed partial class FavoriteSongsPage : Page
     {
         public FavoriteSongsViewModel ViewModel { get; }
@@ -32,9 +26,8 @@ namespace Yee_Music.Pages
         {
             this.InitializeComponent();
 
-            // 初始化ViewModel
             ViewModel = new FavoriteSongsViewModel(App.MusicPlayer);
-            // 设置DataContext
+
             this.DataContext = ViewModel;
         }
         private async void MusicList_PropertiesClick(object sender, MusicInfo music)

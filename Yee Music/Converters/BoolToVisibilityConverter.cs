@@ -16,7 +16,6 @@ namespace Yee_Music.Converters
             return value is Visibility visibility && visibility == Visibility.Visible;
         }
     }
-
     public class InverseBoolToVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, string language)

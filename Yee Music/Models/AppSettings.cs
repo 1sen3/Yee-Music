@@ -16,11 +16,7 @@ namespace Yee_Music.Models
         private static AppSettings _instance;
         private static readonly object _lock = new object();
         private string _settingsFilePath;
-
-        // 添加一个字典来存储额外的设置
         private Dictionary<string, object> _additionalSettings = new Dictionary<string, object>();
-
-        // 单例访问器
         public static AppSettings Instance
         {
             get
@@ -38,11 +34,9 @@ namespace Yee_Music.Models
                 return _instance;
             }
         }
-        // 设置属性
         public List<string> MusicLibraryPaths { get; set; } = new List<string>();
         public string PlayMode { get; set; } = "Sequential";
 
-        // 修改为直接属性，不再使用GetSetting/SaveSetting
         [JsonPropertyName("IsShuffleEnabled")]
         public bool IsShuffleEnabled { get; set; } = false;
 

@@ -44,13 +44,14 @@
                             Width="65">
                     <!-- 歌曲名称 -->
                     <devcontrols:AutoScrollView MaxWidth="65"
-                                                Width="65">
+                                                Width="65"
+                                                ScrollingPixelsPreSecond="30">
                         <TextBlock x:Name="SongName"
-                               Text="{Binding CurrentMusic.Title, FallbackValue='未播放'}"
-                               FontSize="12"
-                               FontWeight="Bold"
-                               TextTrimming="CharacterEllipsis"
-                               TextWrapping="NoWrap"/>
+                                   Text="{Binding CurrentMusic.Title, FallbackValue='未播放'}"
+                                   FontSize="12"
+                                   FontWeight="Bold"
+                                   TextTrimming="CharacterEllipsis"
+                                   TextWrapping="NoWrap"/>
                     </devcontrols:AutoScrollView>
                     <!-- 歌手名称 -->
                     <devcontrols:AutoScrollView MaxWidth="65"

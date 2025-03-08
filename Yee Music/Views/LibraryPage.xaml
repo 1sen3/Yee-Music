@@ -6,11 +6,12 @@
     xmlns:local="using:Yee_Music.Pages"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     mc:Ignorable="d">
 
     <Grid Padding="0 0 0 0">
         <Grid.RowDefinitions>
-            <RowDefinition Height="auto"/>
+            <RowDefinition Height="64"/>
             <RowDefinition Height="1"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
@@ -23,21 +24,14 @@
                FontWeight="Bold"
                FontSize="16"
                VerticalAlignment="Center"/>
-            <Pivot VerticalAlignment="Center"
-                   SelectionChanged="LibraaryPivot_SelectionChanged"
-                   x:Name="LibraryPivot">
-                <Pivot.HeaderTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding}" FontSize="14"/>
-                    </DataTemplate>
-                </Pivot.HeaderTemplate>
-                <PivotItem Header="歌曲">
-                </PivotItem>
-                <PivotItem Header="专辑">
-                </PivotItem>
-                <PivotItem Header="歌手">
-                </PivotItem>
-            </Pivot>
+            <controls:Segmented Margin="10 0 0 0"
+                                x:Name="LibrarySegmented"
+                                VerticalAlignment="Center"
+                                SelectionChanged="LibrarySegmented_SelectionChanged">
+                <controls:SegmentedItem Content="歌曲"/>
+                <controls:SegmentedItem Content="歌手"/>
+                <controls:SegmentedItem Content="专辑"/>
+            </controls:Segmented>
         </StackPanel>
         <Border Background="#40808080"
                 Grid.Row="1"/>

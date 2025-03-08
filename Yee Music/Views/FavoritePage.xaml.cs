@@ -26,10 +26,12 @@ namespace Yee_Music.Pages
         public FavoritePage()
         {
             this.InitializeComponent();
+
+            FavoriteSegmented.SelectedIndex = 0;
         }
-        private void FavoritePivot_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void FavoriteSegmented_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            switch (FavoritePivot.SelectedIndex)
+            switch (FavoriteSegmented.SelectedIndex)
             {
                 case 0:
                     Settings_PivotFrame.Navigate(typeof(FavoriteSongsPage));

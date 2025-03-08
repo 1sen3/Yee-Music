@@ -28,6 +28,7 @@ using Microsoft.UI.Text;
 using Windows.Storage.Pickers;
 using Yee_Music.ViewModels;
 using Microsoft.UI.Dispatching;
+using Microsoft.VisualBasic.Logging;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -52,12 +53,18 @@ namespace Yee_Music
                 // 设置窗口图标和标题栏
                 string iconpath = GetAssetsPath("Icon.ico");
                 AppWindow.SetIcon(iconpath);
+
                 this.ExtendsContentIntoTitleBar = true;
                 AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
                 AppWindow.TitleBar.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;
 
                 // 获取窗口句柄 - 这应该尽早完成
                 HWND = WindowNative.GetWindowHandle(this);
+
+                // 限制窗口最小尺寸
+                AppWindow.Resize(new Windows.Graphics.SizeInt32 { Width = 1366, Height = 768 });
+                AppWindow.Changed += AppWindow_Changed;
+
 
                 // 加载设置
                 LoadAndApplySettings();
@@ -99,6 +106,26 @@ namespace Yee_Music
             {
                 System.Diagnostics.Debug.WriteLine($"MainWindow 初始化时出错: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"堆栈跟踪: {ex.StackTrace}");
+            }
+        }
+        private static void AppWindow_Changed(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowChangedEventArgs args)
+        {
+            try
+            {
+                if (sender == null)
+                    return;
+
+                if (sender.Size.Height < 768 && sender.Size.Width < 1366)
+                    sender.Resize(new Windows.Graphics.SizeInt32 { Width = 1366, Height = 768 });
+                else if (sender.Size.Height < 768)
+                    sender.Resize(new Windows.Graphics.SizeInt32 { Width = sender.Size.Width, Height = 768 });
+                else if (sender.Size.Width < 1366)
+                    sender.Resize(new Windows.Graphics.SizeInt32 { Width = 1366, Height = sender.Size.Height });
+
+            }
+            catch (Exception ex)
+            {
+                
             }
         }
         public static string GetAssetsPath(string fileName)

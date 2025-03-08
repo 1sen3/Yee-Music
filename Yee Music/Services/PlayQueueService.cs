@@ -156,55 +156,38 @@ namespace Yee_Music.Services
             SaveQueueToDatabaseAsync().ConfigureAwait(false);
         }
         // 获取下一首歌
-        public MusicInfo GetNext(bool loopIfEnd = true)
+        public MusicInfo GetNext(bool loopIfEnd = false)
         {
-            try
+            if (PlayQueue == null || PlayQueue.Count == 0)
             {
-                if (PlayQueue == null || PlayQueue.Count == 0)
-                {
-                    Debug.WriteLine("播放队列为空，无法获取下一首歌曲");
-                    return null;
-                }
+                Debug.WriteLine("播放队列为空，无法获取下一首");
+                return null;
+            }
 
-                // 计算下一个索引
-                int nextIndex = CurrentIndex + 1;
-                if (nextIndex >= PlayQueue.Count)
+            int nextIndex = CurrentIndex + 1;
+
+            // 如果已经到达列表末尾
+            if (nextIndex >= PlayQueue.Count)
+            {
+                if (loopIfEnd)
                 {
-                    // 如果不循环且已到列表末尾，则返回 null
-                    if (!loopIfEnd)
-                    {
-                        Debug.WriteLine("已到达播放列表末尾，且不循环播放");
-                        return null;
-                    }
+                    // 如果允许循环，则从头开始
                     nextIndex = 0;
-                }
-
-                // 设置当前索引
-                CurrentIndex = nextIndex;
-
-                // 安全检查：确保当前索引有效
-                if (CurrentIndex >= 0 && CurrentIndex < PlayQueue.Count)
-                {
-                    Debug.WriteLine($"切换到下一首: {PlayQueue[CurrentIndex].Title}, 索引: {CurrentIndex}");
-
-                    // 保存到数据库
-                    SaveQueueToDatabaseAsync().ConfigureAwait(false);
-
-                    return PlayQueue[CurrentIndex];
+                    Debug.WriteLine("已到达播放列表末尾，循环到第一首");
                 }
                 else
                 {
-                    Debug.WriteLine($"下一首索引无效: {CurrentIndex}, 队列大小: {PlayQueue.Count}");
-                    // 重置索引到有效范围
-                    CurrentIndex = PlayQueue.Count > 0 ? 0 : -1;
-                    return CurrentIndex >= 0 ? PlayQueue[CurrentIndex] : null;
+                    // 如果不允许循环，则返回null
+                    Debug.WriteLine("已到达播放列表末尾，且不循环播放");
+                    return null;
                 }
             }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"获取下一首歌曲时出错: {ex.Message}");
-                return null;
-            }
+
+            // 设置当前索引
+            SetCurrentIndex(nextIndex);
+
+            // 返回下一首歌曲
+            return PlayQueue[nextIndex];
         }
 
         // 获取上一首歌

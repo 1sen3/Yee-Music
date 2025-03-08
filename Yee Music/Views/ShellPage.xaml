@@ -19,13 +19,26 @@
             </Grid.RowDefinitions>
             <TitleBar x:Name="AppTitleBar"
                       Title="Yee Music"
-                      Subtitle="Preview"
                       IsBackButtonVisible="True"
                       IsPaneToggleButtonVisible="True"
                       PaneToggleRequested="AppTitleBar_PaneToggleRequested">
                 <TitleBar.IconSource>
                     <ImageIconSource ImageSource="ms-appx:///Assets//StoreLogo.scale-100.png"/>
                 </TitleBar.IconSource>
+                <TitleBar.LeftContent>
+                    <StackPanel Orientation="Horizontal">
+                        <Border Background="Pink" 
+                            Height="20"
+                            CornerRadius="4"
+                            VerticalAlignment="Center">
+                            <TextBlock Text="Preview"
+                                   FontSize="12"
+                                   Foreground="Black"
+                                   Margin="6 0 6 0"
+                                   VerticalAlignment="Center"/>
+                        </Border>
+                    </StackPanel>
+                </TitleBar.LeftContent>
             </TitleBar>
             <NavigationView x:Name="nav"
                             Canvas.ZIndex="0"

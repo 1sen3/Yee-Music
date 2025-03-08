@@ -26,10 +26,12 @@ namespace Yee_Music.Pages
         public LibraryPage()
         {
             this.InitializeComponent();
+
+            LibrarySegmented.SelectedIndex = 0;
         }
-        private void LibraaryPivot_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void LibrarySegmented_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            switch (LibraryPivot.SelectedIndex)
+            switch (LibrarySegmented.SelectedIndex)
             {
                 case 0:
                     Settings_PivotFrame.Navigate(typeof(LibrarySongsPage));

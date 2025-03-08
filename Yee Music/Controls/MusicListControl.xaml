@@ -7,62 +7,24 @@
     xmlns:models="using:Yee_Music.Models"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:ex="using:CommunityToolkit.WinUI"
+    xmlns:helpers="using:Yee_Music.Helpers"
+    xmlns:ui="using:CommunityToolkit.WinUI"
+    xmlns:media="using:CommunityToolkit.WinUI.Media"
+    xmlns:dev="using:DevWinUI"
+    xmlns:ic="using:FluentIcons.WinUI"
     mc:Ignorable="d"
     d:DesignHeight="300"
     d:DesignWidth="400">
+
 
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-
-        <!-- 表头 -->
-        <Grid x:Name="TitleBar"
-              Padding="0 0 44 0"
-              Grid.Row="0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="50"/>
-                <ColumnDefinition Width="2*"/>
-                <ColumnDefinition Width="1.5*"/>
-                <ColumnDefinition Width="1.5*"/>
-                <ColumnDefinition Width="1*"/>
-            </Grid.ColumnDefinitions>
-
-            <TextBlock VerticalAlignment="Center"
-                       FontSize="12"
-                       TextTrimming="CharacterEllipsis"
-                       Text="歌名"
-                       Grid.Column="1"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                       Margin="16 0 0 0"/>
-
-            <TextBlock VerticalAlignment="Center"
-                       FontSize="12"
-                       TextTrimming="CharacterEllipsis"
-                       Text="歌手"
-                       Grid.Column="2"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                       Margin="18 0 0 0"/>
-
-            <TextBlock VerticalAlignment="Center"
-                       FontSize="12"
-                       TextTrimming="CharacterEllipsis"
-                       Text="专辑"
-                       Grid.Column="3"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                       Margin="12 0 0 0"/>
-
-            <TextBlock VerticalAlignment="Center"
-                       FontSize="12"
-                       TextTrimming="CharacterEllipsis"
-                       Text="歌曲时长"
-                       Grid.Column="4"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                       Margin="-10 0 0 0"/>
-        </Grid>
-
-        <!-- 空状态提示 -->
+        
         <Grid x:Name="EmptyStateGrid" 
               Grid.Row="1" 
               Visibility="{x:Bind ShowEmptyState, Mode=OneWay}"
@@ -85,41 +47,168 @@
             </StackPanel>
         </Grid>
 
-        <!-- 音乐列表 -->
+        <Border Padding="0 0 44 0"
+                x:Name="FunctionBarBorder"
+                Visibility="{x:Bind HasSelectedItems,Mode=OneWay}">
+            <Grid x:Name="FunctionBar"        
+                  Visibility="Visible"
+                  Background="{ThemeResource CardBackgroundFillColorDefault}"
+                  CornerRadius="12"
+                  BorderBrush="#40808080"
+                  BorderThickness="1"
+                  Height="50">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal"
+                            Margin="16 0 0 0"
+                            Grid.Column="0"
+                            Spacing="10">
+                    <CheckBox x:Name="CheckAll"
+                              Checked="CheckAll_Checked"
+                              Unchecked="ClearCheckAll_Click"/>
+                    <TextBlock Text="{x:Bind SelectedItemsCount, Mode=OneWay, Converter={StaticResource StringFormatConverter}, ConverterParameter='已选择 {0} 项'}"
+                               VerticalAlignment="Center"
+                               Margin="-90"/>
+                    <dev:Divider MaxHeight="16"
+                        LineStroke="#40808080"
+                        LineStrokeThickness="2"
+                        Orientation="Vertical"
+                        VerticalAlignment="Center"
+                        Margin="10 0 10 0"/>
+                    <Button x:Name="ClearCheckAll"
+                            VerticalAlignment="Center"
+                            Click="ClearCheckAll_Click">
+                        <TextBlock Text="清除"/>
+                    </Button>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal"
+                            Margin="0 0 16 0"
+                            Grid.Column="2"
+                            Spacing="10">
+                    <Button x:Name="FuncBarPlay"
+                            Style="{StaticResource AccentButtonStyle}">
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="5">
+                            <ic:FluentIcon Icon="Play"/>
+                            <TextBlock Text="播放"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="FuncBarAddPlayQueue">
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="5">
+                            <ic:FluentIcon Icon="AlbumAdd"/>
+                            <TextBlock Text="加入播放列表"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="FuncMusicProperty">
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="5">
+                            <ic:FluentIcon Icon="Add"/>
+                            <TextBlock Text="添加到"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
         <ListView x:Name="MusicListView"
+                  helpers:ListViewExtensions.ItemCornerRadius="8"
                   ItemsSource="{x:Bind MusicList, Mode=OneWay}"
                   SelectedItem="{x:Bind SelectedMusic, Mode=TwoWay}"
                   Height="auto"
                   ScrollViewer.VerticalScrollBarVisibility="Visible"
                   Grid.Row="1"
-                  Margin="0 10 0 0"
                   Padding="0 0 44 0"
                   IsItemClickEnabled="True"
                   ItemClick="MusicListView_ItemClick"
                   Visibility="{x:Bind ShowEmptyState, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+            <ListView.Header>
+                <Grid x:Name="TitleBar"
+                      Padding="0 0 44 20"
+                      Height="50"
+                      Visibility="{x:Bind HasSelectedItems, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="1.5*"/>
+                        <ColumnDefinition Width="1.5*"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock VerticalAlignment="Center"
+                               FontSize="12"
+                               TextTrimming="CharacterEllipsis"
+                               Text="歌名"
+                               Grid.Column="1"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Margin="36 0 0 0"/>
+
+                    <TextBlock VerticalAlignment="Center"
+                               FontSize="12"
+                               TextTrimming="CharacterEllipsis"
+                               Text="歌手"
+                               Grid.Column="2"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Margin="45 0 0 0"/>
+
+                    <TextBlock VerticalAlignment="Center"
+                               FontSize="12"
+                               TextTrimming="CharacterEllipsis"
+                               Text="专辑"
+                               Grid.Column="3"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Margin="45 0 0 0"/>
+
+                    <TextBlock VerticalAlignment="Center"
+                               FontSize="12"
+                               TextTrimming="CharacterEllipsis"
+                               Text="歌曲时长"
+                               Grid.Column="4"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Margin="30 0 0 0"/>
+                </Grid>
+            </ListView.Header>
             <ListView.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <VirtualizingStackPanel Orientation="Vertical"/>
+                    <ItemsStackPanel AreStickyGroupHeadersEnabled="True"/>
                 </ItemsPanelTemplate>
             </ListView.ItemsPanel>
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="models:MusicInfo">
-                    <Grid PointerEntered="Grid_PointerEntered"
-                          PointerExited="Grid_PointerExited">
+                    <Grid x:Name="MusicItemGrid" 
+                          PointerEntered="Grid_PointerEntered"
+                          PointerExited="Grid_PointerExited"
+                          Background="Transparent">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="35"/>
+                            <ColumnDefinition Width="35"/>
                             <ColumnDefinition Width="2*"/>
                             <ColumnDefinition Width="1.5*"/>
                             <ColumnDefinition Width="1.5*"/>
                             <ColumnDefinition Width="1*"/>
                         </Grid.ColumnDefinitions>
 
-                        <Border Grid.Column="0" Background="Transparent">
+                        <CheckBox x:Name="MusicListCheckBox"
+                                  Grid.Column="0"
+                                  Checked="MusicListCheckBox_Checked"
+                                  Unchecked="MusicListCheckBox_Unchecked"
+                                  Visibility="Collapsed"/>
+
+                        <Border Grid.Column="1" Background="Transparent">
                             <Button x:Name="PlayButton"
                                     Command="{Binding ElementName=MusicListControl, Path=PlayCommand}"
                                     CommandParameter="{Binding}"
                                     Click="PlayButton_Click"
-                                    Visibility="Collapsed">
+                                    Visibility="Collapsed"
+                                    Style="{ThemeResource AlternateCloseButtonStyle}"
+                                    Width="35"
+                                    Height="35"
+                                    Margin="-10 0 10 0">
                                 <FontIcon FontSize="16"
                                           Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                                           Glyph="&#xE768;"/>
@@ -131,11 +220,12 @@
                                    TextTrimming="CharacterEllipsis"
                                    Text="{Binding Title}"
                                    ToolTipService.ToolTip="{Binding Title}"
-                                   Grid.Column="1"/>
+                                   Grid.Column="2"/>
 
                         <Button Background="Transparent" 
                                 BorderBrush="Transparent"
-                                Grid.Column="2">
+                                Grid.Column="3"
+                                Style="{ThemeResource DateTimePickerFlyoutButtonStyle}">
                             <TextBlock FontSize="12"
                                        Text="{Binding Artist}"
                                        TextTrimming="CharacterEllipsis"
@@ -144,7 +234,8 @@
 
                         <Button Background="Transparent"
                                 BorderBrush="Transparent"
-                                Grid.Column="3">
+                                Grid.Column="4"
+                                Style="{ThemeResource DateTimePickerFlyoutButtonStyle}">
                             <TextBlock FontSize="12"
                                        Text="{Binding Album}"
                                        TextTrimming="CharacterEllipsis"
@@ -155,24 +246,32 @@
                                    FontSize="12"
                                    TextTrimming="CharacterEllipsis"
                                    Text="{Binding Duration, Converter={StaticResource DurationConverter}}"
-                                   Grid.Column="4"/>
-
-                        <!-- 右键菜单 -->
+                                   Grid.Column="5"/>
                         <Grid.ContextFlyout>
-                            <MenuFlyout x:Name="MusicListMenuFlyout" SystemBackdrop="{StaticResource AcrylicBackgroundFillColorDefaultBackdrop}">
-                                <!-- 播放 -->
-                                <MenuFlyoutItem Text="播放" Icon="Play" Click="PlayMenuItem_Click"/>
+                            <MenuFlyout x:Name="MusicListMenuFlyout" 
+                                        SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}">
 
-                                <!-- 添加到收藏夹 -->
+                                <MenuFlyoutItem x:Name="PlayMenuItem" Text="播放" Icon="Play" Click="PlayMenuItem_Click"/>
+
+                                <MenuFlyoutSeparator/>
+
                                 <MenuFlyoutItem x:Name="AddToFavoriteMenuItem" 
-                                                Text="添加到收藏夹" 
+                                                Text="添加到喜欢" 
                                                 Click="AddToFavoriteMenuItem_Click">
                                     <MenuFlyoutItem.Icon>
-                                        <FontIcon Glyph="&#xE734;"/>
+                                        <FontIcon Glyph="&#xEB51;"/>
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
 
-                                <!-- 添加到播放列表 -->
+                                <MenuFlyoutItem x:Name="RemoveFromFavoriteMenuItem" 
+                                                Text="移出喜欢" 
+                                                Click="RemoveFromFavoriteMenuItem_Click"
+                                                Visibility="Collapsed">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xEA92;"/>
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+
                                 <MenuFlyoutItem x:Name="AddToPlaylistMenuItem" 
                                                 Text="添加到播放列表" 
                                                 Click="AddToPlaylistMenuItem_Click">
@@ -181,20 +280,18 @@
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
 
-                                <!-- 从播放列表移除 -->
                                 <MenuFlyoutItem x:Name="RemoveFromQueueMenuItem" 
                                                 Text="移出播放列表" 
-                                                Click="RemoveFromQueueMenuItem_Click">
+                                                Click="RemoveFromQueueMenuItem_Click"
+                                                Visibility="Collapsed">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE74D;"/>
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
 
-                                <!-- 分隔符 -->
                                 <MenuFlyoutSeparator/>
 
-                                <!-- 属性 -->
-                                <MenuFlyoutItem Text="属性" Click="PropertiesMenuItem_Click">
+                                <MenuFlyoutItem x:Name="PropertiesMenuItem" Text="属性" Click="PropertiesMenuItem_Click">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE946;"/>
                                     </MenuFlyoutItem.Icon>
@@ -204,6 +301,59 @@
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Padding" Value="16 0 10 0" />
+                    <Setter Property="Margin" Value="0 2" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListViewItem">
+                                <Grid x:Name="RootGrid">
+                                    <Border x:Name="Background"
+                                            CornerRadius="8"  
+                                            Background="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Converter={StaticResource AlternateRowBackgroundConverter}}"
+                                            BorderThickness="1"
+                                            BorderBrush="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Converter={StaticResource AlternateItemBorderConverter}}"/>
+
+                                    <ContentPresenter x:Name="ContentPresenter"
+                                                      ContentTransitions="{TemplateBinding ContentTransitions}"
+                                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                      Content="{TemplateBinding Content}"
+                                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                      Margin="{TemplateBinding Padding}"/>
+
+                                    <VisualStateManager.VisualStateGroups>
+                                        <VisualStateGroup x:Name="CommonStates">
+                                            <VisualState x:Name="Normal"/>
+                                            <VisualState x:Name="PointerOver">
+                                                <VisualState.Setters>
+                                                    <Setter Target="Background.Background" Value="{ThemeResource ListViewItemBackgroundPointerOver}"/>
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                            <VisualState x:Name="Selected">
+                                                <VisualState.Setters>
+                                                    <Setter Target="Background.Background" Value="{ThemeResource CardBackgroundFillColorDefault}"/>
+                                                    <Setter Target="Background.BorderBrush" Value="#40808080"/>
+                                                    <Setter Target="Background.BorderThickness" Value="1"/>
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                            <VisualState x:Name="SelectedPointerOver">
+                                                <VisualState.Setters>
+                                                    <Setter Target="Background.Background" Value="{ThemeResource ListViewItemBackgroundPointerOver}"/>
+                                                    <Setter Target="Background.BorderBrush" Value="#40808080"/>
+                                                    <Setter Target="Background.BorderThickness" Value="1"/>
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                        </VisualStateGroup>
+                                    </VisualStateManager.VisualStateGroups>
+                                </Grid>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListView.ItemContainerStyle>
         </ListView>
     </Grid>
 </UserControl>

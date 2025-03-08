@@ -22,6 +22,9 @@
             <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
             <converters:RandomIconConverter x:Key="RandomIconConverter"/>
             <converters:RandomColorConverter x:Key="RandomColorConverter"/>
+            <converters:AlternateItemBorderConverter x:Key="AlternateItemBorderConverter"/>
+            <converters:StringFormatConverter x:Key="StringFormatConverter"/>
+            <converters:AlternateRowBackgroundConverter x:Key="AlternateRowBackgroundConverter"/>
             <!-- Other app resources here -->
         </ResourceDictionary>
     </Application.Resources>

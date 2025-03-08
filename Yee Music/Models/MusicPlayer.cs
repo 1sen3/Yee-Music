@@ -43,12 +43,8 @@ namespace Yee_Music.Models
         private readonly AppSettings _settings;
         private PlayQueueService _playQueueService;
         
-        // SMTC相关字段
-        private SystemMediaTransportControls _systemMediaControls;
-        private SystemMediaTransportControlsDisplayUpdater _displayUpdater;
-        
         // 防止重复触发MediaEnded的标记
-        private bool _isHandlingMediaEnded = false;
+        //private bool _isHandlingMediaEnded = false;
         private DateTime _lastPositionCheckTime = DateTime.MinValue;
 
         public event Action PlaybackCompleted;
@@ -261,9 +257,6 @@ namespace Yee_Music.Models
 
                     // 手动触发位置更新事件，确保UI显示正确的时间
                     PositionChanged?.Invoke(position);
-                    
-                    // 更新SMTC信息
-                    UpdateSystemMediaTransportControls(music, false);
 
                     Debug.WriteLine($"已加载上次播放的音乐: {music.Title}，位置: {position}，播放模式: {_playMode}");
                 }
@@ -301,9 +294,24 @@ namespace Yee_Music.Models
 
             // 创建MediaPlayer实例
             _mediaPlayer = new MediaPlayer();
-            
+
+            // 设置媒体结束事件
+            _mediaPlayer.MediaEnded += async (sender, args) =>
+            {
+                try
+                {
+                    Debug.WriteLine("系统MediaEnded事件触发");
+                    HandleMediaEndedSimple();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"处理系统媒体结束事件时出错: {ex.Message}");
+                }
+            };
+
             // 获取播放队列服务
             _playQueueService = PlayQueueService.Instance;
+
             // 监听队列加载完成事件
             _playQueueService.QueueLoaded += (s, e) =>
             {
@@ -316,6 +324,7 @@ namespace Yee_Music.Models
                     // 如果需要自动播放，取消下面的注释
                 };
             };
+
             // 从设置中加载播放模式 - 将字符串转换为枚举
             if (Enum.TryParse(_settings.PlayMode, out PlaybackMode mode))
             {
@@ -361,64 +370,53 @@ namespace Yee_Music.Models
             {
                 try
                 {
-                    if (_mediaPlayer.PlaybackSession != null && _isPlaying)
+                    if (_mediaPlayer.PlaybackSession != null)
                     {
+                        // 只更新位置和进度，不检测歌曲结束
                         var position = _mediaPlayer.PlaybackSession.Position;
-                        var duration = _currentMusic?.Duration ?? TimeSpan.Zero;
-                        
+
+                        // 更新当前时间和进度
+                        _currentTime = position;
+                        _progress = position.TotalSeconds;
+
                         // 触发位置更新事件
                         PositionChanged?.Invoke(position);
-                        
-                        // 如果当前正在处理MediaEnded，跳过额外检查
-                        if (_isHandlingMediaEnded)
-                            return;
-                        
-                        // 降低检查频率：每秒最多检查一次结束状态
-                        var now = DateTime.Now;
-                        if ((now - _lastPositionCheckTime).TotalSeconds >= 1)
-                        {
-                            _lastPositionCheckTime = now;
-                            
-                            // 仅在必要时执行结束检查
-                            if (duration.TotalSeconds > 0 && position.TotalSeconds > 0)
-                            {
-                                // 特殊保护：对于短歌（小于10秒），如果播放位置已经接近结束，提前触发结束处理
-                                if (duration.TotalSeconds < 10 && position.TotalSeconds >= duration.TotalSeconds - 0.5)
-                                {
-                                    Debug.WriteLine($"短歌特殊保护：检测到短歌即将结束：{position.TotalSeconds}/{duration.TotalSeconds}");
-                                    
-                                    // 设置标记，避免重复触发
-                                    _isHandlingMediaEnded = true;
-                                    
-                                    // 主动处理为结束
-                                    HandleMediaEnded();
-                                    return;
-                                }
-                                
-                                // 检查是否播放到了歌曲末尾但没有触发MediaEnded事件
-                                if (position.TotalSeconds >= duration.TotalSeconds - 1.5)
-                                {
-                                    Debug.WriteLine($"检测到歌曲接近结束：{position.TotalSeconds}/{duration.TotalSeconds}");
-                                    
-                                    // 设置标记，避免重复触发
-                                    _isHandlingMediaEnded = true;
-                                    
-                                    // 如果接近歌曲末尾，主动处理为结束
-                                    HandleMediaEnded();
-                                    return; // 提前返回，避免执行下面的代码
-                                }
-                                
-                                // 检查播放位置是否异常（超过歌曲时长）
-                                if (position.TotalSeconds > duration.TotalSeconds + 2)
-                                {
-                                    Debug.WriteLine($"检测到异常播放位置：{position.TotalSeconds}秒，超过歌曲时长{duration.TotalSeconds}秒");
-                                    
-                                    // 强制结束当前播放并切换到下一首
-                                    _isHandlingMediaEnded = true;
-                                    HandleMediaEnded();
-                                }
-                            }
-                        }
+                        //    // 即使暂停状态也更新位置（解决暂停状态下切换歌曲的问题）
+                        //    var position = _mediaPlayer.PlaybackSession.Position;
+                        //    var duration = _currentMusic?.Duration ?? TimeSpan.Zero;
+
+                        //    // 更新当前时间和进度
+                        //    _currentTime = position;
+                        //    _progress = position.TotalSeconds;
+
+                        //    // 触发位置更新事件
+                        //    PositionChanged?.Invoke(position);
+
+                        //    // 只有在播放状态下才检查歌曲结束
+                        //    if (_isPlaying)
+                        //    {
+                        //        // 降低检查频率：每秒最多检查一次结束状态
+                        //        var now = DateTime.Now;
+                        //        if ((now - _lastPositionCheckTime).TotalSeconds >= 1)
+                        //        {
+                        //            _lastPositionCheckTime = now;
+
+                        //            // 仅在必要时执行结束检查
+                        //            if (duration.TotalSeconds > 0 && position.TotalSeconds > 0)
+                        //            {
+                        //                // 修改：将检测阈值从1.0秒改为0.3秒，确保歌曲接近真正结束时才触发
+                        //                if (position.TotalSeconds >= duration.TotalSeconds - 0.3)
+                        //                {
+                        //                    Debug.WriteLine($"检测到歌曲接近结束：{position.TotalSeconds}/{duration.TotalSeconds}");
+
+                        //                    // 直接处理歌曲结束，不使用复杂的标记机制
+                        //                    HandleMediaEndedSimple();
+                        //                    return;
+                        //                }
+                        //            }
+                        //        }
+                        //    }
+                        //}
                     }
                 }
                 catch (Exception ex)
@@ -441,9 +439,6 @@ namespace Yee_Music.Models
                 {
                     _positionTimer.Stop();
                 }
-                
-                // 更新SMTC播放状态
-                UpdateSystemMediaPlaybackStatus(_isPlaying);
             };
             
             // 设置媒体结束事件
@@ -453,16 +448,13 @@ namespace Yee_Music.Models
                 {
                     Debug.WriteLine("系统MediaEnded事件触发");
                     // 使用统一的处理方法
-                    HandleMediaEnded();
+                    HandleMediaEndedSimple();
                 }
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"处理系统媒体结束事件时出错: {ex.Message}");
                 }
             };
-            
-            // 初始化SMTC
-            InitializeSystemMediaTransportControls();
             
             // 尝试加载上次播放的音乐
             _ = LoadLastPlayedMusicAsync();
@@ -495,6 +487,14 @@ namespace Yee_Music.Models
                     _settings.LastPlaybackPosition = _mediaPlayer.PlaybackSession.Position.TotalSeconds;
                     _settings.Save();
                 }
+
+                // 停止当前播放
+                _mediaPlayer.Pause();
+
+                // 重要：重置播放位置
+                _mediaPlayer.Position = TimeSpan.Zero;
+                _progress = 0;
+                _currentTime = TimeSpan.Zero;
 
                 // 设置新的音乐
                 _currentMusic = music;
@@ -533,15 +533,6 @@ namespace Yee_Music.Models
 
                     // 步骤6：开始播放
                     _mediaPlayer.Play();
-
-                    // 步骤7：再次检查播放位置，确保从头开始播放
-                    await Task.Delay(200);
-                    if (_mediaPlayer.PlaybackSession != null &&
-                        _mediaPlayer.PlaybackSession.Position.TotalSeconds > 0.5)
-                    {
-                        _mediaPlayer.PlaybackSession.Position = TimeSpan.Zero;
-                        Debug.WriteLine("播放开始后再次重置位置");
-                    }
                 }
                 catch (Exception ex)
                 {
@@ -557,14 +548,23 @@ namespace Yee_Music.Models
                 // 通知当前音乐已更改
                 CurrentMusicChanged?.Invoke(music);
 
-                // 更新SMTC信息
-                UpdateSystemMediaTransportControls(music, true);
-
                 // 更新播放队列中的当前索引
                 int index = _playQueueService.GetIndexOf(music);
                 if (index >= 0)
                 {
                     _playQueueService.SetCurrentIndex(index);
+                }
+
+                // 修复：强制更新进度条，确保UI显示正确的时间
+                _currentTime = TimeSpan.Zero;
+                _progress = 0;
+                PositionChanged?.Invoke(TimeSpan.Zero);
+
+                // 确保定时器启动，解决从暂停状态切换歌曲的问题
+                if (!_positionTimer.IsEnabled)
+                {
+                    _positionTimer.Start();
+                    Debug.WriteLine("启动进度更新定时器");
                 }
 
                 Debug.WriteLine($"开始播放: {music.Title}, 时长: {music.Duration.TotalSeconds}秒");
@@ -587,11 +587,71 @@ namespace Yee_Music.Models
         }
         public void UpdatePosition()
         {
-            if (_mediaPlayer?.PlaybackSession != null)
+            try
             {
-                var position = _mediaPlayer.PlaybackSession.Position;
-                PositionChanged?.Invoke(position);
-                Debug.WriteLine($"手动更新位置: {position}");
+                if (_mediaPlayer.Source == null)
+                {
+                    _currentTime = TimeSpan.Zero;
+                    _progress = 0;
+                    PositionChanged?.Invoke(TimeSpan.Zero);
+                    return;
+                }
+
+                // 获取当前播放位置
+                _currentTime = _mediaPlayer.PlaybackSession.Position;
+
+                // 计算进度
+                if (_currentMusic != null && _currentMusic.Duration.TotalSeconds > 0)
+                {
+                    _progress = _currentTime.TotalSeconds;
+                }
+                else
+                {
+                    _progress = 0;
+                }
+
+                // 触发位置变更事件
+                PositionChanged?.Invoke(_currentTime);
+            }
+            //try
+            //{
+            //    if (_mediaPlayer.Source == null)
+            //    {
+            //        _currentTime = TimeSpan.Zero;
+            //        _progress = 0;
+            //        PositionChanged?.Invoke(TimeSpan.Zero);
+            //        return;
+            //    }
+
+            //    // 获取当前播放位置
+            //    _currentTime = _mediaPlayer.PlaybackSession.Position;
+
+            //    // 计算进度百分比
+            //    if (_currentMusic != null && _currentMusic.Duration.TotalSeconds > 0)
+            //    {
+            //        _progress = _currentTime.TotalSeconds;
+            //    }
+            //    else
+            //    {
+            //        _progress = 0;
+            //    }
+
+            //    // 触发位置变更事件
+            //    PositionChanged?.Invoke(_currentTime);
+
+            //    // 修改：将检测阈值从0.5秒改为0.3秒
+            //    if (_currentMusic != null &&
+            //        _currentTime.TotalSeconds > 0 &&
+            //        _currentMusic.Duration.TotalSeconds > 0 &&
+            //        _currentTime.TotalSeconds >= _currentMusic.Duration.TotalSeconds - 0.3)
+            //    {
+            //        Debug.WriteLine("检测到歌曲即将结束，手动触发结束事件");
+            //        HandleMediaEndedSimple();
+            //    }
+            //}
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"更新播放位置时出错: {ex.Message}");
             }
         }
         public void SetPosition(TimeSpan position)
@@ -604,9 +664,6 @@ namespace Yee_Music.Models
             _mediaPlayer.Pause();
             _isPlaying = false;
             PlaybackStateChanged?.Invoke(false);
-            
-            // 更新SMTC播放状态
-            UpdateSystemMediaPlaybackStatus(false);
 
             // 停止定时器
             _positionTimer.Stop();
@@ -618,15 +675,21 @@ namespace Yee_Music.Models
             _mediaPlayer?.Play();
             _isPlaying = true;
             PlaybackStateChanged?.Invoke(true);
-            
-            // 更新SMTC播放状态
-            UpdateSystemMediaPlaybackStatus(true);
 
             // 确保定时器启动
             if (!_positionTimer.IsEnabled)
             {
                 _positionTimer.Start();
                 Debug.WriteLine("恢复播放，启动定时器");
+            }
+
+            // 强制触发一次位置更新，确保UI同步
+            if (_mediaPlayer?.PlaybackSession != null)
+            {
+                var position = _mediaPlayer.PlaybackSession.Position;
+                _currentTime = position;
+                _progress = position.TotalSeconds;
+                PositionChanged?.Invoke(position);
             }
         }
 
@@ -638,9 +701,6 @@ namespace Yee_Music.Models
             CurrentMusicChanged?.Invoke(null);
             // 触发状态变更事件
             PlaybackStateChanged?.Invoke(false);
-            
-            // 清除SMTC信息
-            ClearSystemMediaTransportControls();
         }
         public void SetVolume(double volume)
         {
@@ -659,9 +719,6 @@ namespace Yee_Music.Models
             Debug.WriteLine($"应用关闭时保存状态：位置={_settings.LastPlaybackPosition}秒，模式={_settings.PlayMode}");
 
             _positionTimer?.Stop();
-            
-            // 清除SMTC信息
-            ClearSystemMediaTransportControls();
         }
         // 更新歌曲的喜欢状态
         public void UpdateCurrentMusicFavoriteState()
@@ -690,71 +747,7 @@ namespace Yee_Music.Models
                 System.Diagnostics.Debug.WriteLine($"获取音乐收藏状态出错: {ex.Message}");
             }
         }
-        
-        #region SMTC相关方法
-        
-        // 初始化系统媒体传输控件
-        private void InitializeSystemMediaTransportControls()
-        {
-            try
-            {
-                // 获取SMTC实例
-                _systemMediaControls = SystemMediaTransportControls.GetForCurrentView();
-                if (_systemMediaControls == null)
-                {
-                    Debug.WriteLine("无法获取当前视图的SMTC实例");
-                    return;
-                }
-                
-                _displayUpdater = _systemMediaControls.DisplayUpdater;
-                
-                // 启用SMTC功能
-                _systemMediaControls.IsEnabled = true;
-                _systemMediaControls.IsPlayEnabled = true;
-                _systemMediaControls.IsPauseEnabled = true;
-                _systemMediaControls.IsNextEnabled = true;
-                _systemMediaControls.IsPreviousEnabled = true;
-                
-                // 设置媒体类型
-                _displayUpdater.Type = MediaPlaybackType.Music;
-                
-                // 注册按钮点击事件
-                _systemMediaControls.ButtonPressed += SystemMediaControls_ButtonPressed;
-                
-                Debug.WriteLine("系统媒体传输控件初始化完成");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"初始化系统媒体传输控件出错: {ex.Message}");
-            }
-        }
-        
-        // 处理SMTC按钮点击事件
-        private void SystemMediaControls_ButtonPressed(SystemMediaTransportControls sender, SystemMediaTransportControlsButtonPressedEventArgs args)
-        {
-            try
-            {
-                switch (args.Button)
-                {
-                    case SystemMediaTransportControlsButton.Play:
-                        Resume();
-                        break;
-                    case SystemMediaTransportControlsButton.Pause:
-                        Pause();
-                        break;
-                    case SystemMediaTransportControlsButton.Next:
-                        _ = PlayNextAsync();
-                        break;
-                    case SystemMediaTransportControlsButton.Previous:
-                        _ = PlayPreviousAsync();
-                        break;
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"处理系统媒体控制按钮点击事件出错: {ex.Message}");
-            }
-        }
+
 
         // 播放下一首
         public async Task<bool> PlayNextAsync(bool loopIfEnd = false)
@@ -798,7 +791,12 @@ namespace Yee_Music.Models
                 }
                 else
                 {
-                    nextMusic = _playQueueService.GetNext(loopIfEnd);
+                    // 修复：根据当前播放模式决定是否循环
+                    bool shouldLoop = loopIfEnd || _playMode == PlaybackMode.ListRepeat;
+                    nextMusic = _playQueueService.GetNext(shouldLoop);
+
+                    // 调试输出
+                    Debug.WriteLine($"获取下一首歌曲: 播放模式={_playMode}, 是否循环={shouldLoop}");
                 }
 
                 if (nextMusic == null)
@@ -809,12 +807,6 @@ namespace Yee_Music.Models
 
                 // 播放下一首歌曲，确保从头开始播放
                 await PlayAsync(nextMusic);
-
-                // 额外检查：确保播放位置被重置
-                if (_mediaPlayer?.PlaybackSession != null)
-                {
-                    _mediaPlayer.PlaybackSession.Position = TimeSpan.Zero;
-                }
 
                 return true;
             }
@@ -890,151 +882,57 @@ namespace Yee_Music.Models
                 return false;
             }
         }
-        // 更新SMTC信息
-        private async void UpdateSystemMediaTransportControls(MusicInfo music, bool isPlaying)
-        {
-            if (music == null || _systemMediaControls == null || _displayUpdater == null)
-                return;
-                
-            try
-            {
-                // 清除之前的信息
-                _displayUpdater.ClearAll();
-                
-                // 设置音乐信息
-                _displayUpdater.MusicProperties.Title = music.Title;
-                _displayUpdater.MusicProperties.Artist = music.Artist;
-                _displayUpdater.MusicProperties.AlbumTitle = music.Album;
-                
-                // 设置专辑封面
-                if (music.AlbumArt != null && music.AlbumArt.Length > 0)
-                {
-                    try
-                    {
-                        // 创建内存流
-                        var stream = new InMemoryRandomAccessStream();
-                        // 使用WindowsRuntimeBufferExtensions将byte[]转换为IBuffer
-                        await stream.WriteAsync(music.AlbumArt.AsBuffer());
-                        stream.Seek(0);
-                        
-                        // 设置缩略图
-                        _displayUpdater.Thumbnail = RandomAccessStreamReference.CreateFromStream(stream);
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"设置SMTC专辑封面出错: {ex.Message}");
-                    }
-                }
-                
-                // 更新显示
-                _displayUpdater.Update();
-                
-                // 更新播放状态
-                UpdateSystemMediaPlaybackStatus(isPlaying);
-                
-                Debug.WriteLine($"已更新系统媒体传输控件信息: {music.Title}");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"更新系统媒体传输控件信息出错: {ex.Message}");
-            }
-        }
-        
-        // 更新SMTC播放状态
-        private void UpdateSystemMediaPlaybackStatus(bool isPlaying)
-        {
-            if (_systemMediaControls == null)
-                return;
-                
-            try
-            {
-                // 设置播放状态
-                _systemMediaControls.PlaybackStatus = isPlaying 
-                    ? MediaPlaybackStatus.Playing 
-                    : MediaPlaybackStatus.Paused;
-                    
-                Debug.WriteLine($"已更新系统媒体传输控件播放状态: {(isPlaying ? "播放中" : "已暂停")}");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"更新系统媒体传输控件播放状态出错: {ex.Message}");
-            }
-        }
-        
-        // 清除SMTC信息
-        private void ClearSystemMediaTransportControls()
-        {
-            if (_systemMediaControls == null || _displayUpdater == null)
-                return;
-                
-            try
-            {
-                // 清除所有信息
-                _displayUpdater.ClearAll();
-                _displayUpdater.Update();
-                
-                // 设置为已停止状态
-                _systemMediaControls.PlaybackStatus = MediaPlaybackStatus.Stopped;
-                
-                Debug.WriteLine("已清除系统媒体传输控件信息");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"清除系统媒体传输控件信息出错: {ex.Message}");
-            }
-        }
-
-        #endregion
-
         // 处理媒体结束
-        private void HandleMediaEnded()
+        private async void HandleMediaEndedSimple()
         {
             try
             {
-                // 设置标记，防止重复触发
-                _isHandlingMediaEnded = true;
-
                 Debug.WriteLine("处理媒体结束事件");
 
-                // 触发播放完成事件
-                PlaybackCompleted?.Invoke();
+                // 暂停当前播放
+                _mediaPlayer.Pause();
 
-                // 根据播放模式处理
+                // 根据播放模式决定下一步操作
                 switch (_playMode)
                 {
-                    case PlaybackMode.Sequential:
-                        // 顺序播放，播放下一首
-                        _ = PlayNextAsync();
-                        break;
                     case PlaybackMode.SingleRepeat:
-                        // 单曲循环，重新播放当前歌曲
+                        // 单曲循环：重新从头播放当前歌曲
                         if (_currentMusic != null)
                         {
-                            // 重置播放位置并重新播放
-                            if (_mediaPlayer?.PlaybackSession != null)
-                            {
-                                _mediaPlayer.PlaybackSession.Position = TimeSpan.Zero;
-                            }
+                            Debug.WriteLine("单曲循环：重新播放当前歌曲");
+                            _mediaPlayer.PlaybackSession.Position = TimeSpan.Zero;
                             _mediaPlayer.Play();
+
+                            // 强制更新进度条
+                            _currentTime = TimeSpan.Zero;
+                            _progress = 0;
+                            PositionChanged?.Invoke(TimeSpan.Zero);
                         }
                         break;
+
                     case PlaybackMode.ListRepeat:
-                        // 列表循环，播放下一首，如果是最后一首则从头开始
-                        _ = PlayNextAsync(true);
+                        // 列表循环：播放下一首，如果到达列表末尾则从头开始
+                        Debug.WriteLine("列表循环：播放下一首");
+                        await PlayNextAsync(true); // true表示循环到列表开头
                         break;
+
                     case PlaybackMode.Random:
-                        // 随机播放
-                        _ = PlayRandomAsync();
+                        // 随机播放：播放随机歌曲
+                        Debug.WriteLine("随机播放：播放随机歌曲");
+                        await PlayRandomAsync();
+                        break;
+
+                    case PlaybackMode.Sequential:
+                    default:
+                        // 顺序播放：播放下一首，不循环
+                        Debug.WriteLine("顺序播放：播放下一首");
+                        await PlayNextAsync(false);
                         break;
                 }
-
-                // 延迟重置标记，确保处理完成
-                Task.Delay(500).ContinueWith(_ => _isHandlingMediaEnded = false);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"处理媒体结束事件时出错: {ex.Message}");
-                _isHandlingMediaEnded = false;
             }
         }
     }

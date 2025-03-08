@@ -19,6 +19,12 @@
             EmptyStateIcon="&#xE8F1;"
             EmptyStateTitle="音乐库为空"
             EmptyStateDescription="请在设置中添加音乐库文件夹"
-            PropertiesClick="MusicList_PropertiesClick"/>
+            PropertiesClick="MusicList_PropertiesClick"
+            ShowPlayMenuItem="True"
+            ShowAddToPlaylistMenuItem="True"
+            ShowRemoveFromQueueMenuItem="False"
+            ShowAddToFavoriteMenuItem="True"
+            ShowRemoveFromFavoriteMenuItem="False"
+            ShowPropertiesMenuItem="True"/>
     </Grid>
 </Page>

@@ -51,18 +51,54 @@ namespace Yee_Music.Services
                 case "Dark":
                     theme = ElementTheme.Dark;
                     break;
-                case "Default":
                 default:
                     theme = ElementTheme.Default;
                     break;
             }
 
-            // 应用主题到根元素
-            if (_mainWindow?.Content is FrameworkElement rootElement)
+            try
             {
-                rootElement.RequestedTheme = theme;
+                if (_mainWindow != null && _mainWindow.Content is FrameworkElement rootElement)
+                {
+                    rootElement.RequestedTheme = theme;
+                    
+                    // 获取当前主题的重点色
+                    var accentColor = GetCurrentAccentColor();
+                    
+                    // 通知应用主题已变更
+                    if (Application.Current is App app)
+                    {
+                        app.OnThemeChanged(accentColor);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"应用主题时出错: {ex.Message}");
             }
         }
+
+        // 获取当前主题的重点色
+        private Windows.UI.Color GetCurrentAccentColor()
+        {
+            try
+            {
+                // 尝试获取应用程序的重点色
+                if (Application.Current.Resources.TryGetValue("SystemAccentColor", out object resource) &&
+                    resource is Windows.UI.Color accentColor)
+                {
+                    return accentColor;
+                }
+                
+                // 使用默认重点色
+                return Windows.UI.Color.FromArgb(255, 0, 120, 215); // 默认蓝色
+            }
+            catch
+            {
+                return Windows.UI.Color.FromArgb(255, 0, 120, 215); // 默认蓝色
+            }
+        }
+
         private void ApplyWindowMaterialInternal(string materialType)
         {
             if (_mainWindow == null)

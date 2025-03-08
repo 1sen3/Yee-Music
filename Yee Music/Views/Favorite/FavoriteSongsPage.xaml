@@ -18,6 +18,12 @@
             EmptyStateIcon="&#xEB51;"
             EmptyStateTitle="还没有喜欢的音乐"
             EmptyStateDescription="泠泠七弦上，静听松风寒"
-            PropertiesClick="MusicList_PropertiesClick"/>
+            PropertiesClick="MusicList_PropertiesClick"
+            ShowPlayMenuItem="True"
+            ShowAddToPlaylistMenuItem="True"
+            ShowRemoveFromQueueMenuItem="False"
+            ShowAddToFavoriteMenuItem="False"
+            ShowRemoveFromFavoriteMenuItem="True"
+            ShowPropertiesMenuItem="True"/>
     </Grid>
 </Page>

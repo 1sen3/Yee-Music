@@ -21,7 +21,6 @@ namespace Yee_Music.ViewModels
         private readonly MusicPlayer _player;
         private MusicInfo _currentMusic;
         private PlayQueueService _playQueueService;
-        //private readonly SystemMediaTransportControlsService _smtcService;
         private bool _isPlaying;
         private double _progress;
         private double _volume;
@@ -402,19 +401,23 @@ namespace Yee_Music.ViewModels
         {
             try
             {
-                bool success = await _player.PlayNextAsync();
-                
-                if (success)
+                // 修复：在列表循环模式下，确保传递正确的循环参数
+                bool loopIfEnd = _playMode == PlaybackMode.ListRepeat;
+
+                // 调试输出
+                Debug.WriteLine($"手动播放下一首: 播放模式={_playMode}, 是否循环={loopIfEnd}");
+
+                // 调用播放器的PlayNextAsync方法，并传递循环参数
+                bool success = await _player.PlayNextAsync(loopIfEnd);
+
+                if (!success)
                 {
-                    // 手动更新播放状态为播放
-                    IsPlaying = true;
-                    OnPropertyChanged(nameof(IsPlaying));
-                    Debug.WriteLine("播放状态已更新为播放");
+                    Debug.WriteLine("播放下一首失败");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"播放下一首歌曲时出错: {ex.Message}");
+                Debug.WriteLine($"播放下一首出错: {ex.Message}");
             }
         }
 
@@ -576,10 +579,8 @@ namespace Yee_Music.ViewModels
             {
                 try
                 {
-                    // 切换收藏状态
                     music.IsFavorite = !music.IsFavorite;
 
-                    // 更新数据库
                     var databaseService = App.Services.GetService<DatabaseService>();
                     if (databaseService != null)
                     {
@@ -587,10 +588,8 @@ namespace Yee_Music.ViewModels
                         System.Diagnostics.Debug.WriteLine($"更新音乐收藏状态: {music.Title}, 收藏: {music.IsFavorite}");
                     }
 
-                    // 通知 UI 更新
                     OnPropertyChanged(nameof(CurrentMusic));
 
-                    // 触发事件通知其他地方更新
                     OnFavoriteStatusChanged(music);
                 }
                 catch (Exception ex)

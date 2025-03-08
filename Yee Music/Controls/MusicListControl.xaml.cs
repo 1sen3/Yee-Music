@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
@@ -7,19 +8,56 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Yee_Music.Models;
+using Yee_Music.Services;
+using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
+using DispatcherQueuePriority = Microsoft.UI.Dispatching.DispatcherQueuePriority;
 
 namespace Yee_Music.Controls
 {
     public sealed partial class MusicListControl : UserControl
     {
+        public bool HasSelectedItems
+        {
+            get => (bool)GetValue(HasSelectedItemsProperty);
+            private set => SetValue(HasSelectedItemsProperty, value);
+        }
+        public static readonly DependencyProperty HasSelectedItemsProperty =
+            DependencyProperty.Register(
+                nameof(HasSelectedItems),
+                typeof(bool),
+                typeof(MusicListControl),
+                new PropertyMetadata(false));
+        public static readonly DependencyProperty SelectedItemsCountProperty =
+            DependencyProperty.Register(
+                nameof(SelectedItemsCount),
+                typeof(int),
+                typeof(MusicListControl),
+                new PropertyMetadata(0));
+
+        public int SelectedItemsCount
+        {
+            get => (int)GetValue(SelectedItemsCountProperty);
+            private set => SetValue(SelectedItemsCountProperty, value);
+        }
+
+        private List<MusicInfo> _selectedMusicList = new List<MusicInfo>();
+
+        public List<MusicInfo> SelectedMusicList => _selectedMusicList;
         public bool ShowRemoveFromQueueMenuItem
         {
-            get { return (bool)GetValue(ShowRemoveFromQueueMenuItemProperty); }
-            set { SetValue(ShowRemoveFromQueueMenuItemProperty, value); }
+            get => (bool)GetValue(ShowRemoveFromQueueMenuItemProperty);
+            set => SetValue(ShowRemoveFromQueueMenuItemProperty, value);
         }
-        public static readonly DependencyProperty ShowRemoveFromQueueMenuItemProperty = 
-            DependencyProperty.Register("ShowRemoveFromQueueMenuItem", typeof(bool), typeof(MusicListControl),
-            new PropertyMetadata(false, OnShowRemoveFromQueueMenuItemChanged));
+        public static readonly DependencyProperty ShowRemoveFromQueueMenuItemProperty =
+            DependencyProperty.Register(
+                nameof(ShowRemoveFromQueueMenuItem),
+                typeof(bool),
+                typeof(MusicListControl),
+                new PropertyMetadata(true, OnShowRemoveFromQueueMenuItemChanged));
+        private static void OnShowRemoveFromQueueMenuItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            OnMenuItemVisibilityChanged(d, e);
+        }
         public ICommand RemoveFromQueueCommand
         {
             get { return (ICommand)GetValue(RemoveFromQueueCommandProperty); }
@@ -36,6 +74,14 @@ namespace Yee_Music.Controls
         public static readonly DependencyProperty AddToFavoriteCommandProperty =
             DependencyProperty.Register("AddToFavoriteCommand", typeof(ICommand), typeof(MusicListControl),
             new PropertyMetadata(null));
+        public ICommand RemoveFromFavoriteCommand
+        {
+            get { return (ICommand)GetValue(RemoveFromFavoriteCommandProperty); }
+            set { SetValue(RemoveFromFavoriteCommandProperty, value); }
+        }
+        public static readonly DependencyProperty RemoveFromFavoriteCommandProperty =
+            DependencyProperty.Register("RemoveFromFavoriteCommand", typeof(ICommand), typeof(MusicListControl),
+            new PropertyMetadata(null));
         public ICommand AddToPlaylistCommand
         {
             get { return (ICommand)GetValue(AddToPlaylistCommandProperty); }
@@ -49,11 +95,54 @@ namespace Yee_Music.Controls
         {
             this.InitializeComponent();
 
+            ContextMenuItems = new ObservableCollection<MenuFlyoutItemBase>();
+            ContextMenuItems.CollectionChanged += ContextMenuItems_CollectionChanged;
+
             this.Loaded += MusicListControl_Loaded;
+            
+            this.RegisterPropertyChangedCallback(MusicListProperty, OnMusicListChanged);
         }
+
+        protected override void OnApplyTemplate()
+        {
+            base.OnApplyTemplate();
+            
+            if (MusicListView != null)
+            {
+                // 监听容器创建事件
+                MusicListView.ContainerContentChanging += MusicListView_ContainerContentChanging;
+            }
+        }
+
+        private void MusicListView_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
+        {
+            if (args.Phase == 0)
+            {
+                args.RegisterUpdateCallback(ContainerContentChanging_Phase1);
+            }
+        }
+
+        private void ContainerContentChanging_Phase1(ListViewBase sender, ContainerContentChangingEventArgs args)
+        {
+            if (args.Phase == 1)
+            {
+                DispatcherQueue.GetForCurrentThread().TryEnqueue(
+                    DispatcherQueuePriority.Low, 
+                    () => UpdateMenuItemsVisibility());
+            }
+        }
+
         private void MusicListControl_Loaded(object sender, RoutedEventArgs e)
         {
-            UpdateMenuItemsVisibility();
+            if (MusicListView != null && MusicListView.Items != null)
+            {
+                DispatcherQueue.GetForCurrentThread().TryEnqueue(
+                    DispatcherQueuePriority.Low,
+                    () => 
+                    {
+                        UpdateMenuItemsVisibility();
+                    });
+            }
         }
         private void ContextMenuItems_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
@@ -63,14 +152,6 @@ namespace Yee_Music.Controls
                 {
                     AddContextMenuItem(item);
                 }
-            }
-        }
-        private static void OnShowRemoveFromQueueMenuItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            var control = d as MusicListControl;
-            if (control != null)
-            {
-                control.UpdateMenuItemsVisibility();
             }
         }
 
@@ -165,15 +246,64 @@ namespace Yee_Music.Controls
             set { SetValue(ContextMenuItemsProperty, value); }
         }
 
+        // 各个菜单项可见性
+        public bool ShowPlayMenuItem
+        {
+            get { return (bool)GetValue(ShowPlayMenuItemProperty); }
+            set { SetValue(ShowPlayMenuItemProperty, value); }
+        }
+
+        public static readonly DependencyProperty ShowPlayMenuItemProperty =
+            DependencyProperty.Register("ShowPlayMenuItem", typeof(bool), typeof(MusicListControl), 
+                new PropertyMetadata(true, OnMenuItemVisibilityChanged));
+
+        public bool ShowAddToFavoriteMenuItem
+        {
+            get { return (bool)GetValue(ShowAddToFavoriteMenuItemProperty); }
+            set { SetValue(ShowAddToFavoriteMenuItemProperty, value); }
+        }
+
+        public static readonly DependencyProperty ShowAddToFavoriteMenuItemProperty =
+            DependencyProperty.Register("ShowAddToFavoriteMenuItem", typeof(bool), typeof(MusicListControl), 
+                new PropertyMetadata(true, OnMenuItemVisibilityChanged));
+        public bool ShowRemoveFromFavoriteMenuItem
+        {
+            get { return (bool)GetValue(ShowRemoveFromFavoriteMenuItemProperty); }
+            set { SetValue(ShowRemoveFromFavoriteMenuItemProperty, value); }
+        }
+
+        public static readonly DependencyProperty ShowRemoveFromFavoriteMenuItemProperty =
+            DependencyProperty.Register("ShowRemoveFromFavoriteMenuItem", typeof(bool), typeof(MusicListControl),
+                new PropertyMetadata(true, OnMenuItemVisibilityChanged));
+        public bool ShowAddToPlaylistMenuItem
+        {
+            get { return (bool)GetValue(ShowAddToPlaylistMenuItemProperty); }
+            set { SetValue(ShowAddToPlaylistMenuItemProperty, value); }
+        }
+
+        public static readonly DependencyProperty ShowAddToPlaylistMenuItemProperty =
+            DependencyProperty.Register("ShowAddToPlaylistMenuItem", typeof(bool), typeof(MusicListControl), 
+                new PropertyMetadata(true, OnMenuItemVisibilityChanged));
+
+        public bool ShowPropertiesMenuItem
+        {
+            get { return (bool)GetValue(ShowPropertiesMenuItemProperty); }
+            set { SetValue(ShowPropertiesMenuItemProperty, value); }
+        }
+
+        public static readonly DependencyProperty ShowPropertiesMenuItemProperty =
+            DependencyProperty.Register("ShowPropertiesMenuItem", typeof(bool), typeof(MusicListControl), 
+                new PropertyMetadata(true, OnMenuItemVisibilityChanged));
+
         #endregion
 
         #region 事件
 
-        // 音乐项点击事件
         public event EventHandler<MusicInfo> MusicItemClick;
 
         // 属性按钮点击事件
         public event EventHandler<MusicInfo> PropertiesClick;
+
         // 播放菜单项点击事件
         private void PlayMenuItem_Click(object sender, RoutedEventArgs e)
         {
@@ -189,16 +319,11 @@ namespace Yee_Music.Controls
         }
 
         // 添加到收藏夹菜单项点击事件
-        private void AddToFavoriteMenuItem_Click(object sender, RoutedEventArgs e)
+        private async void AddToFavoriteMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            var menuItem = sender as MenuFlyoutItem;
-            if (menuItem != null)
+            if (AddToFavoriteCommand != null && AddToFavoriteCommand.CanExecute(MusicListView.SelectedItem))
             {
-                var music = menuItem.DataContext as MusicInfo;
-                if (music != null && AddToFavoriteCommand != null && AddToFavoriteCommand.CanExecute(music))
-                {
-                    AddToFavoriteCommand.Execute(music);
-                }
+                AddToFavoriteCommand.Execute(MusicListView.SelectedItem);
             }
         }
 
@@ -229,25 +354,25 @@ namespace Yee_Music.Controls
                 }
             }
         }
-
-        #endregion
-
         private void MusicListView_ItemClick(object sender, ItemClickEventArgs e)
         {
             if (e.ClickedItem is MusicInfo music)
             {
                 MusicItemClick?.Invoke(this, music);
+
+                RefreshMenuItemsVisibility();
             }
         }
-
         private void Grid_PointerEntered(object sender, PointerRoutedEventArgs e)
         {
             if (sender is Grid grid)
             {
                 var playButton = grid.FindName("PlayButton") as Button;
-                if (playButton != null)
+                var checkBox = grid.FindName("MusicListCheckBox") as CheckBox;
+                if (playButton != null && checkBox != null)
                 {
                     playButton.Visibility = Visibility.Visible;
+                    checkBox.Visibility = Visibility.Visible;
                 }
             }
         }
@@ -257,9 +382,14 @@ namespace Yee_Music.Controls
             if (sender is Grid grid)
             {
                 var playButton = grid.FindName("PlayButton") as Button;
-                if (playButton != null)
+                var checkBox = grid.FindName("MusicListCheckBox") as CheckBox;
+                if (playButton != null && checkBox != null)
                 {
                     playButton.Visibility = Visibility.Collapsed;
+                    if (!(bool)checkBox.IsChecked)
+                    {
+                        checkBox.Visibility = Visibility.Collapsed;
+                    }
                 }
             }
         }
@@ -279,39 +409,7 @@ namespace Yee_Music.Controls
                 PropertiesClick?.Invoke(this, music);
             }
         }
-        private void UpdateMenuItemsVisibility()
-        {
-            // 在ListView的ItemTemplate中找到MenuFlyout并更新菜单项可见性
-            var template = MusicListView.ItemTemplate as DataTemplate;
-            if (template != null)
-            {
-                MusicListView.ContainerContentChanging += (sender, args) =>
-                {
-                    if (args.ItemContainer != null)
-                    {
-                        var item = args.ItemContainer.ContentTemplateRoot as Grid;
-                        if (item != null)
-                        {
-                            var flyout = item.ContextFlyout as MenuFlyout;
-                            if (flyout != null)
-                            {
-                                foreach (var menuItem in flyout.Items)
-                                {
-                                    if (menuItem is MenuFlyoutItem mfi)
-                                    {
-                                        if (mfi.Name == "RemoveFromQueueMenuItem")
-                                        {
-                                            mfi.Visibility = ShowRemoveFromQueueMenuItem ? Visibility.Visible : Visibility.Collapsed;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                };
-            }
-        }
-        // 处理菜单项点击事件
+
         private void RemoveFromQueueMenuItem_Click(object sender, RoutedEventArgs e)
         {
             var menuItem = sender as MenuFlyoutItem;
@@ -324,14 +422,115 @@ namespace Yee_Music.Controls
                 }
             }
         }
-        // 添加一个方法来添加右键菜单项
+
+        private void RemoveFromFavoriteMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var menuItem = sender as MenuFlyoutItem;
+            if (menuItem != null)
+            {
+                var music = menuItem.DataContext as MusicInfo;
+                if (music != null && RemoveFromFavoriteCommand != null && RemoveFromFavoriteCommand.CanExecute(music))
+                {
+                    RemoveFromFavoriteCommand.Execute(music);
+                }
+            }
+        }
+
+        private void MusicListCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox checkBox && checkBox.DataContext is MusicInfo music)
+            {
+                if (!_selectedMusicList.Contains(music))
+                {
+                    checkBox.Visibility = Visibility.Visible;
+                    _selectedMusicList.Add(music);
+                    UpdateSelectionState(true);
+                }
+            }
+        }
+
+        private void MusicListCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox checkBox && checkBox.DataContext is MusicInfo music)
+            {
+                checkBox.Visibility = Visibility.Collapsed;
+                _selectedMusicList.Remove(music);
+                UpdateSelectionState(false);
+            }
+        }
+        #endregion
+        private void UpdateSelectionState(bool state)
+        {
+            if (state)
+            {
+                SelectedItemsCount +=1;
+            }
+            else
+            {
+                SelectedItemsCount -= 1;
+            }
+            HasSelectedItems = SelectedItemsCount > 0;
+        }
+        private void OnMusicListChanged(DependencyObject sender, DependencyProperty dp)
+        {
+            DispatcherQueue.GetForCurrentThread().TryEnqueue(
+                DispatcherQueuePriority.Low, 
+                () => UpdateMenuItemsVisibility());
+        }
+        private void UpdateMenuItemsVisibility()
+        {
+            if (MusicListView != null)
+            {
+                foreach (var item in MusicListView.Items)
+                {
+                    if (MusicListView.ContainerFromItem(item) is ListViewItem container)
+                    {
+                        if (container.ContentTemplateRoot is Grid grid)
+                        {
+                            if (grid.ContextFlyout is MenuFlyout menuFlyout)
+                            {
+                                foreach (var menuItem in menuFlyout.Items)
+                                {
+                                    if (menuItem is MenuFlyoutItem flyoutItem)
+                                    {
+                                        if (flyoutItem.Name == "PlayMenuItem")
+                                        {
+                                            flyoutItem.Visibility = ShowPlayMenuItem ? Visibility.Visible : Visibility.Collapsed;
+                                        }
+                                        else if (flyoutItem.Name == "AddToFavoriteMenuItem")
+                                        {
+                                            flyoutItem.Visibility = ShowAddToFavoriteMenuItem ? Visibility.Visible : Visibility.Collapsed;
+                                        }
+                                        else if (flyoutItem.Name == "RemoveFromFavoriteMenuItem")
+                                        {
+                                            flyoutItem.Visibility = ShowRemoveFromFavoriteMenuItem ? Visibility.Visible : Visibility.Collapsed;
+                                        }
+                                        else if (flyoutItem.Name == "AddToPlaylistMenuItem")
+                                        {
+                                            flyoutItem.Visibility = ShowAddToPlaylistMenuItem ? Visibility.Visible : Visibility.Collapsed;
+                                        }
+                                        else if (flyoutItem.Name == "RemoveFromQueueMenuItem")
+                                        {
+                                            flyoutItem.Visibility = ShowRemoveFromQueueMenuItem ? Visibility.Visible : Visibility.Collapsed;
+                                        }
+                                        else if (flyoutItem.Name == "PropertiesMenuItem")
+                                        {
+                                            flyoutItem.Visibility = ShowPropertiesMenuItem ? Visibility.Visible : Visibility.Collapsed;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         public void AddContextMenuItem(MenuFlyoutItemBase menuItem)
         {
-            // 在代码中找到MenuFlyout并添加项
             var template = MusicListView.ItemTemplate as DataTemplate;
             if (template != null)
             {
-                // 我们需要在运行时为每个项添加菜单项
                 MusicListView.ContainerContentChanging += (sender, args) =>
                 {
                     if (args.ItemContainer != null && args.Item is MusicInfo music)
@@ -342,7 +541,6 @@ namespace Yee_Music.Controls
                             var flyout = item.ContextFlyout as MenuFlyout;
                             if (flyout != null)
                             {
-                                // 找到分隔符的索引
                                 int separatorIndex = -1;
                                 for (int i = 0; i < flyout.Items.Count; i++)
                                 {
@@ -353,10 +551,8 @@ namespace Yee_Music.Controls
                                     }
                                 }
 
-                                // 在分隔符前插入菜单项
                                 if (separatorIndex > 0)
                                 {
-                                    // 检查是否已添加此菜单项
                                     bool alreadyAdded = false;
                                     foreach (var existingItem in flyout.Items)
                                     {
@@ -370,7 +566,6 @@ namespace Yee_Music.Controls
 
                                     if (!alreadyAdded)
                                     {
-                                        // 创建新的菜单项副本
                                         if (menuItem is MenuFlyoutItem originalItem)
                                         {
                                             var newItem = new MenuFlyoutItem
@@ -380,7 +575,6 @@ namespace Yee_Music.Controls
                                                 Command = originalItem.Command
                                             };
 
-                                            // 设置命令参数为当前音乐项
                                             if (originalItem.CommandParameter is Binding)
                                             {
                                                 newItem.CommandParameter = music;
@@ -403,6 +597,81 @@ namespace Yee_Music.Controls
                     }
                 };
             }
+        }
+
+        private static void OnMenuItemVisibilityChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is MusicListControl control)
+            {
+                control.UpdateMenuItemsVisibility();
+            }
+        }
+
+        public void RefreshMenuItemsVisibility()
+        {
+            UpdateMenuItemsVisibility();
+        }
+
+        private void ClearCheckAll_Click(object sender, RoutedEventArgs e)
+        {
+            ClearAllSelections();
+        }
+        public void ClearAllSelections()
+        {
+            // 清除选中列表
+            _selectedMusicList.Clear();
+
+            // 遍历所有CheckBox并取消选中
+            foreach (var item in MusicListView.Items )
+            {
+                if (SelectedItemsCount == 0)
+                {
+                    return;
+                }
+                var container = MusicListView.ContainerFromItem(item) as ListViewItem;
+                if (container != null)
+                {
+                    var checkBox = FindCheckBoxInContainer(container);
+                    if (checkBox != null)
+                    {
+                        checkBox.IsChecked = false;
+                    }
+                }
+            }
+        }
+        private void CheckAll_Checked(object sender, RoutedEventArgs e)
+        {
+            foreach(var item in MusicListView.Items)
+            {
+                var container = MusicListView.ContainerFromItem(item) as ListViewItem;
+                if (container != null)
+                {
+                    var checkBox = FindCheckBoxInContainer(container);
+                    if (checkBox != null)
+                    {
+                        checkBox.IsChecked = true;
+                    }
+                }
+            }
+        }
+        private CheckBox FindCheckBoxInContainer(ListViewItem container)
+        {
+            // 查找容器中的CheckBox
+            var grid = container.ContentTemplateRoot as Grid;
+            if (grid != null)
+            {
+                foreach (var child in grid.Children)
+                {
+                    if (child is CheckBox checkBox)
+                    {
+                        if (checkBox.Name == "MusicListCheckBox")
+                        {
+                            return checkBox;
+                        }
+                    }
+                }
+            }
+            return null;
         }
     }
 }
