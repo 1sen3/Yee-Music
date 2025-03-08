@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml.Input;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows.Input;
 using Yee_Music.Models;
 using Yee_Music.Services;
@@ -109,7 +110,6 @@ namespace Yee_Music.Controls
             
             if (MusicListView != null)
             {
-                // 监听容器创建事件
                 MusicListView.ContainerContentChanging += MusicListView_ContainerContentChanging;
             }
         }
@@ -618,10 +618,8 @@ namespace Yee_Music.Controls
         }
         public void ClearAllSelections()
         {
-            // 清除选中列表
             _selectedMusicList.Clear();
 
-            // 遍历所有CheckBox并取消选中
             foreach (var item in MusicListView.Items )
             {
                 if (SelectedItemsCount == 0)
@@ -656,7 +654,6 @@ namespace Yee_Music.Controls
         }
         private CheckBox FindCheckBoxInContainer(ListViewItem container)
         {
-            // 查找容器中的CheckBox
             var grid = container.ContentTemplateRoot as Grid;
             if (grid != null)
             {

@@ -28,8 +28,7 @@ namespace Yee_Music.Converters
 
                         if (brush == null)
                         {
-                            Debug.WriteLine("无法获取主题资源，使用硬编码颜色");
-                            return new SolidColorBrush(Windows.UI.Color.FromArgb(30, 128, 128, 128));
+                            return GetAdaptiveBackgroundBrush();
                         }
 
                         return brush;
@@ -37,12 +36,26 @@ namespace Yee_Music.Converters
                 }
             }
 
-            return null; // 透明背景
+            return null;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, string language)
         {
             throw new NotImplementedException();
+        }
+
+        private SolidColorBrush GetAdaptiveBackgroundBrush()
+        {
+            var requestedTheme = Application.Current.RequestedTheme;
+
+            if (requestedTheme == ApplicationTheme.Dark)
+            {
+                return new SolidColorBrush(Windows.UI.Color.FromArgb(30, 200, 200, 200));
+            }
+            else
+            {
+                return new SolidColorBrush(Windows.UI.Color.FromArgb(20, 100, 100, 100));
+            }
         }
     }
 }

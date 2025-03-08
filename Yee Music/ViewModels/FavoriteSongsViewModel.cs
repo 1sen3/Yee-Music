@@ -78,10 +78,24 @@ namespace Yee_Music.ViewModels
         {
             if (music != null)
             {
-                _ = LoadFavoriteSongsAsync();
+                UpdateCurrentMusicFavoriteStatus(music);
             }
         }
+        private void UpdateCurrentMusicFavoriteStatus(MusicInfo music)
+        {
+            var existingItem = FavoriteMusicList.FirstOrDefault(m => m.FilePath == music.FilePath);
 
+            if (music.IsFavorite && existingItem == null)
+            {
+                FavoriteMusicList.Add(music);
+                OnPropertyChanged(nameof(IsFavoriteEmpty));
+            }
+            else if (!music.IsFavorite && existingItem != null)
+            {
+                FavoriteMusicList.Remove(existingItem);
+                OnPropertyChanged(nameof(IsFavoriteEmpty));
+            }
+        }
         public async Task LoadFavoriteSongsAsync()
         {
             try

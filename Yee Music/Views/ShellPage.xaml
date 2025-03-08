@@ -28,17 +28,22 @@
                 <TitleBar.LeftContent>
                     <StackPanel Orientation="Horizontal">
                         <Border Background="Pink" 
-                            Height="20"
-                            CornerRadius="4"
-                            VerticalAlignment="Center">
+                                Height="20"
+                                CornerRadius="4"
+                                VerticalAlignment="Center">
                             <TextBlock Text="Preview"
-                                   FontSize="12"
-                                   Foreground="Black"
-                                   Margin="6 0 6 0"
-                                   VerticalAlignment="Center"/>
+                                       FontSize="12"
+                                       Foreground="Black"
+                                       Margin="6 0 6 0"
+                                       VerticalAlignment="Center"/>
                         </Border>
                     </StackPanel>
                 </TitleBar.LeftContent>
+                <TitleBar.RightContent>
+                    <PersonPicture Width="32"
+                                   Height="32"
+                                   ProfilePicture="/Assets/1/4.png"/>
+                </TitleBar.RightContent>
             </TitleBar>
             <NavigationView x:Name="nav"
                             Canvas.ZIndex="0"

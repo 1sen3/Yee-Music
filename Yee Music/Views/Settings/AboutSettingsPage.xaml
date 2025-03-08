@@ -20,9 +20,8 @@
                                Text="0.2.5.20250309_Beta" />
                 </controls:SettingsCard>
                 <controls:SettingsCard Description="开发者"
-                                           Header="1SenzZ"
-                                           HeaderIcon="{ui:BitmapIcon Source=ms-appx:///Assets/1/2.png}">
-                    <BitmapIcon UriSource="ms-appx:///Assets/1/2.png}"/>
+                                       Header="1SenzZ"
+                                       HeaderIcon="{ui:BitmapIcon Source=ms-appx:///Assets/1/3.png}">
                 </controls:SettingsCard>
             </StackPanel>
         </StackPanel>
