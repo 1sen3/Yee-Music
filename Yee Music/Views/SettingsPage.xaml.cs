@@ -26,20 +26,22 @@ namespace Yee_Music.Pages
         public SettingsPage()
         {
             this.InitializeComponent();
+
+            SettingsSegmented.SelectedIndex = 0;
         }
 
-        private void SettingsPivot_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void SettingsSegmented_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            switch (SettingsPivot.SelectedIndex)
+            switch (SettingsSegmented.SelectedIndex)
             {
                 case 0:
-                    Settings_PivotFrame.Navigate(typeof(LibrarySettingsPage));
+                    Settings_SegmentedFrame.Navigate(typeof(LibrarySettingsPage));
                     break;
                 case 1:
-                    Settings_PivotFrame.Navigate(typeof(PersonalizeSettingsPage));
+                    Settings_SegmentedFrame.Navigate(typeof(PersonalizeSettingsPage));
                     break;
                 case 2:
-                    Settings_PivotFrame.Navigate(typeof(AboutSettingsPage));
+                    Settings_SegmentedFrame.Navigate(typeof(AboutSettingsPage));
                     break;
             }
         }

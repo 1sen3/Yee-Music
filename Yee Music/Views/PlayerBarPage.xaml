@@ -174,7 +174,10 @@
                                 Placement="Top"
                                 Opening="PlayQueueFlyout_Opening"
                                 SystemBackdrop="{StaticResource AcrylicBackgroundFillColorDefaultBackdrop}">
-                        <MenuFlyoutItem Text="播放列表" IsEnabled="False">
+                        <MenuFlyoutItem Text="播放列表" 
+                                        IsEnabled="False"
+                                        FontWeight="Bold"
+                                        Foreground="{ThemeResource TextFillColorPrimary }">
                         </MenuFlyoutItem>
                         <MenuFlyoutSeparator/>
                         <!-- 播放队列为空时显示 -->

@@ -14,6 +14,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using TagLib.Matroska;
 using Windows.Graphics.Printing;
 using Windows.Storage;
@@ -106,7 +108,21 @@ namespace Yee_Music.ViewModels
             get => _isLoading;
             set => SetProperty(ref _isLoading, value);
         }
+        // 用户名属性
+        private string _userName;
+        public string UserName
+        {
+            get => _userName;
+            set => SetProperty(ref _userName, value);
+        }
 
+        // 用户头像源
+        private ImageSource _userAvatarSource;
+        public ImageSource UserAvatarSource
+        {
+            get => _userAvatarSource;
+            set => SetProperty(ref _userAvatarSource, value);
+        }
         // 命令定义
         public IAsyncRelayCommand SelectFolderCommand { get; }
         public IAsyncRelayCommand LoadMusicLibraryCommand { get; }
@@ -641,5 +657,33 @@ namespace Yee_Music.ViewModels
 
         // 收藏列表是否为空
         public bool IsFavoriteEmpty => FavoriteMusicList == null || FavoriteMusicList.Count == 0;
+        public async Task LoadUserInfoAsync()
+        {
+            var settings = AppSettings.Instance;
+
+            // 加载用户名
+            UserName = settings.UserName ?? "未设置用户名";
+
+            // 加载用户头像
+            if (!string.IsNullOrEmpty(settings.UserAvatarPath))
+            {
+                try
+                {
+                    // 从文件加载头像
+                    var file = await StorageFile.GetFileFromPathAsync(settings.UserAvatarPath);
+                    using var stream = await file.OpenReadAsync();
+
+                    var bitmap = new BitmapImage();
+                    await bitmap.SetSourceAsync(stream);
+                    UserAvatarSource = bitmap;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"加载用户头像失败: {ex.Message}");
+                    // 设置默认头像
+                    UserAvatarSource = null;
+                }
+            }
+        }
     }
 }

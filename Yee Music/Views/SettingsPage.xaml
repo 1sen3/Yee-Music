@@ -6,11 +6,12 @@
     xmlns:local="using:Yee_Music.Pages"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     mc:Ignorable="d">
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="auto"/>
+            <RowDefinition Height="64"/>
             <RowDefinition Height="1"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
@@ -23,24 +24,17 @@
                FontWeight="Bold"
                FontSize="16"
                VerticalAlignment="Center"/>
-            <Pivot x:Name="SettingsPivot"
-                   VerticalAlignment="Center"
-                   SelectionChanged="SettingsPivot_SelectionChanged">
-                <Pivot.HeaderTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding}" FontSize="14"/>
-                    </DataTemplate>
-                </Pivot.HeaderTemplate>
-                <PivotItem Header="通用" x:Name="Library">
-                </PivotItem>
-                <PivotItem Header="个性化" x:Name="Personalize">
-                </PivotItem>
-                <PivotItem Header="关于" x:Name="About">
-                </PivotItem>
-            </Pivot>
+            <controls:Segmented x:Name="SettingsSegmented"
+                                Margin="10 0 0 0"
+                                VerticalAlignment="Center"
+                                SelectionChanged="SettingsSegmented_SelectionChanged">
+                <controls:SegmentedItem Content="通用"/>
+                <controls:SegmentedItem Content="个性化"/>
+                <controls:SegmentedItem Content="关于"/>
+            </controls:Segmented>
         </StackPanel>
         <Border Background="#40808080"
                 Grid.Row="1"/>
-        <Frame Grid.Row="2" x:Name="Settings_PivotFrame"/>
+        <Frame Grid.Row="2" x:Name="Settings_SegmentedFrame"/>
     </Grid>
 </Page>

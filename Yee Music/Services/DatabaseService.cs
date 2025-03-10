@@ -33,53 +33,68 @@ namespace Yee_Music.Services
 
                 // 创建音乐库路径表
                 var command = connection.CreateCommand();
-                command.CommandText = 
+                command.CommandText =
                 @"
-                    CREATE TABLE IF NOT EXISTS MusicLibraryPaths (
-                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        Path TEXT NOT NULL UNIQUE
-                )";
+            CREATE TABLE IF NOT EXISTS MusicLibraryPaths (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Path TEXT NOT NULL UNIQUE
+        )";
                 command.ExecuteNonQuery();
 
                 // 创建音乐表 - 添加LibraryPathId外键
                 command = connection.CreateCommand();
-                command.CommandText = 
+                command.CommandText =
                 @"
-                        CREATE TABLE IF NOT EXISTS Music (
-                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        FilePath TEXT NOT NULL UNIQUE,
-                        Title TEXT,
-                        Artist TEXT,
-                        Album TEXT,
-                        Duration TEXT,
-                        IsFavorite INTEGER DEFAULT 0,
-                        LastPlayed TEXT,
-                        PlayCount INTEGER DEFAULT 0,
-                        LibraryPathId INTEGER,
-                        FOREIGN KEY (LibraryPathId) REFERENCES MusicLibraryPaths(Id) ON DELETE CASCADE
-                )";
+                CREATE TABLE IF NOT EXISTS Music (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                FilePath TEXT NOT NULL UNIQUE,
+                Title TEXT,
+                Artist TEXT,
+                Album TEXT,
+                Duration TEXT,
+                IsFavorite INTEGER DEFAULT 0,
+                LastPlayed TEXT,
+                PlayCount INTEGER DEFAULT 0,
+                LibraryPathId INTEGER,
+                FOREIGN KEY (LibraryPathId) REFERENCES MusicLibraryPaths(Id) ON DELETE CASCADE
+        )";
                 command.ExecuteNonQuery();
+
                 // 创建设置表
                 var settingsCommand = connection.CreateCommand();
-                settingsCommand.CommandText = 
+                settingsCommand.CommandText =
                 @"
-                        CREATE TABLE IF NOT EXISTS Settings (
-                        Key TEXT PRIMARY KEY,
-                        Value TEXT
-                )";
+                CREATE TABLE IF NOT EXISTS Settings (
+                Key TEXT PRIMARY KEY,
+                Value TEXT
+        )";
                 await settingsCommand.ExecuteNonQueryAsync();
-                //创建播放列表
+
+                // 创建播放列表表 - 添加这个表
                 command = connection.CreateCommand();
-                command.CommandText=
+                command.CommandText =
                 @"
-                    CREATE TABLE IF NOT EXISTS PlaylistMusic (
-                    PlaylistId INTEGER,
-                    MusicId INTEGER,
-                    SortOrder INTEGER,
-                    PRIMARY KEY (PlaylistId, MusicId),
-                    FOREIGN KEY (PlaylistId) REFERENCES Playlist(Id) ON DELETE CASCADE,
-                    FOREIGN KEY (MusicId) REFERENCES Music(Id) ON DELETE CASCADE
-                )";
+            CREATE TABLE IF NOT EXISTS Playlist (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            Name TEXT NOT NULL,
+            Description TEXT,
+            CreatedAt TEXT,
+            UpdatedAt TEXT
+        )";
+                command.ExecuteNonQuery();
+
+                //创建播放列表音乐关联表
+                command = connection.CreateCommand();
+                command.CommandText =
+                @"
+            CREATE TABLE IF NOT EXISTS PlaylistMusic (
+            PlaylistId INTEGER,
+            MusicId INTEGER,
+            SortOrder INTEGER,
+            PRIMARY KEY (PlaylistId, MusicId),
+            FOREIGN KEY (PlaylistId) REFERENCES Playlist(Id) ON DELETE CASCADE,
+            FOREIGN KEY (MusicId) REFERENCES Music(Id) ON DELETE CASCADE
+        )";
                 command.ExecuteNonQuery();
 
                 // 检查是否需要迁移数据（为现有音乐添加LibraryPathId）
@@ -310,8 +325,8 @@ namespace Yee_Music.Services
 
                 var command = connection.CreateCommand();
                 command.CommandText = @"
-            INSERT OR IGNORE INTO MusicLibraryPaths (Path)
-            VALUES (@Path)";
+                    INSERT OR IGNORE INTO MusicLibraryPaths (Path)
+                    VALUES (@Path)";
                 command.Parameters.AddWithValue("@Path", path);
 
                 int result = await command.ExecuteNonQueryAsync();

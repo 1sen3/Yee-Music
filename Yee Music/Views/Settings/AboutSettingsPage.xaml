@@ -8,21 +8,45 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="using:CommunityToolkit.WinUI"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:ic="using:FluentIcons.WinUI"
+    xmlns:dev="using:DevWinUI"
     mc:Ignorable="d">
 
     <Grid Padding="36">
         <StackPanel Spacing="24">
-            <StackPanel Spacing="16">
-                <controls:SettingsCard Header="Yee Music"
-                                       HeaderIcon="{ui:BitmapIcon Source=ms-appx:///Assets/StoreLogo.scale-100.png}">
+            <StackPanel Spacing="12">
+                <controls:SettingsCard Header="Yee Music">
+                    <controls:SettingsCard.HeaderIcon>
+                        <ImageIcon Source="/Assets/StoreLogo.scale-400.png"/>
+                    </controls:SettingsCard.HeaderIcon>
                     <TextBlock 
-                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                               Text="0.2.5.20250309_Beta" />
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </controls:SettingsCard>
-                <controls:SettingsCard Description="开发者"
-                                       Header="1SenzZ"
-                                       HeaderIcon="{ui:BitmapIcon Source=ms-appx:///Assets/1/3.png}">
-                </controls:SettingsCard>
+                <dev:ElementGroup Orientation="Vertical">
+                    <controls:SettingsCard Header="0.2.6.20250310_Beta">
+                        <controls:SettingsCard.HeaderIcon>
+                            <ic:FluentIcon Icon="CheckmarkCircle"/>
+                        </controls:SettingsCard.HeaderIcon>
+                        <controls:SettingsCard.Description>
+                            <StackPanel Orientation="Vertical">
+                                <TextBlock Text="上次检查更新时间: 2025/03/11"
+                                       HorizontalAlignment="Left"/>
+                                <Button Content="更新内容"
+                                        Style="{ThemeResource TextBlockButtonStyle}"
+                                        FontSize="12"
+                                        HorizontalAlignment="Left"
+                                        Margin="-10 0 0 0"/>
+                            </StackPanel>
+                        </controls:SettingsCard.Description>
+                        <Button Content="检查更新"/>
+                    </controls:SettingsCard>
+                    <InfoBar
+                        Severity="Success"
+                        IsOpen="True"
+                        IsClosable="False"
+                        Message="已更新到最新版本">
+                    </InfoBar>
+                </dev:ElementGroup>
             </StackPanel>
         </StackPanel>
     </Grid>

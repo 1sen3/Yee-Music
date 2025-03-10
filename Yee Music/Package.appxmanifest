@@ -11,7 +11,7 @@
   <Identity
     Name="f1b656cf-5a3c-439f-a260-1f7b398da70a"
     Publisher="CN=舒一森"
-    Version="0.2.5.0" />
+    Version="0.2.6.0" />
 
   <mp:PhoneIdentity PhoneProductId="f1b656cf-5a3c-439f-a260-1f7b398da70a" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 

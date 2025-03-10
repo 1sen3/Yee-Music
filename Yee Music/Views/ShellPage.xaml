@@ -6,6 +6,7 @@
     xmlns:local="using:Yee_Music.Pages"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ic="using:FluentIcons.WinUI"
     mc:Ignorable="d">
 
     <Grid KeyTipPlacementMode="Right">
@@ -19,26 +20,47 @@
             </Grid.RowDefinitions>
             <TitleBar x:Name="AppTitleBar"
                       Title="Yee Music"
-                      IsBackButtonVisible="True"
-                      IsPaneToggleButtonVisible="True"
+                      IsBackButtonVisible="False"
+                      IsPaneToggleButtonVisible="False"
                       PaneToggleRequested="AppTitleBar_PaneToggleRequested">
                 <TitleBar.IconSource>
                     <ImageIconSource ImageSource="ms-appx:///Assets//StoreLogo.scale-100.png"/>
                 </TitleBar.IconSource>
-                <TitleBar.LeftContent>
-                    <StackPanel Orientation="Horizontal">
-                        <Border Background="Pink" 
-                                Height="20"
-                                CornerRadius="4"
-                                VerticalAlignment="Center">
-                            <TextBlock Text="Preview"
-                                       FontSize="12"
-                                       Foreground="Black"
-                                       Margin="6 0 6 0"
-                                       VerticalAlignment="Center"/>
-                        </Border>
-                    </StackPanel>
-                </TitleBar.LeftContent>
+                <TitleBar.Template>
+                    <ControlTemplate>
+                        <StackPanel Orientation="Horizontal" 
+                                    VerticalAlignment="Center" 
+                                    Spacing="16"
+                                    Padding="16 0 0 0">
+                            <Image Source="/Assets/StoreLogo.scale-100.png"
+                                   Width="18"
+                                   Height="18"/>
+                                <TextBlock Text="Yee Music" 
+                                       VerticalAlignment="Center"
+                                       Style="{StaticResource CaptionTextBlockStyle}"/>
+                            <Border Background="PaleGoldenrod" 
+                                    Height="20"
+                                    CornerRadius="4"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="Dev"
+                                           FontSize="12"
+                                           Foreground="Black"
+                                           Margin="6 0 6 0"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <Border Background="Pink" 
+                                    Height="20"
+                                    CornerRadius="4"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="Preview"
+                                           FontSize="12"
+                                           Foreground="Black"
+                                           Margin="6 0 6 0"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                        </StackPanel>
+                    </ControlTemplate>
+                </TitleBar.Template>
                 <TitleBar.RightContent>
                     <PersonPicture Width="32"
                                    Height="32"
@@ -47,39 +69,113 @@
             </TitleBar>
             <NavigationView x:Name="nav"
                             Canvas.ZIndex="0"
-                            IsSettingsVisible="True"
-                            PaneDisplayMode="LeftCompact"
+                            IsSettingsVisible="False"
+                            PaneDisplayMode="Left"
                             IsPaneToggleButtonVisible="False"
                             IsBackButtonVisible="Collapsed"
                             SelectionChanged="Nav_SelectionChanged"
+                            OpenPaneLength="84"
                             Grid.Row="1">
-                <NavigationView.AutoSuggestBox>
-                    <AutoSuggestBox QueryIcon="Find" AutomationProperties.Name="Search"
-                                    PlaceholderText="搜索音乐"/>
-                </NavigationView.AutoSuggestBox>
                 <NavigationView.MenuItems>
-                    <NavigationViewItem x:Name="HomePage" Content="主页" Tag="Home">
-                        <NavigationViewItem.Icon>
-                            <FontIcon Glyph="&#xE80F;"/>
-                        </NavigationViewItem.Icon>
+                    <NavigationViewItem x:Name="HomePage"
+                                        Tag="Home"
+                                        Height="72"
+                                        MinHeight="72">
+                        <StackPanel Orientation="Vertical"
+                                    Margin="0 12 -12 12"
+                                    Spacing="8">
+                            <ic:FluentIcon x:Name="HomeIcon" 
+                                           Icon="Home"
+                                           FontSize="24"
+                                           HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="HomeText" 
+                                       Text="主页"
+                                       FontWeight="Bold"
+                                       FontSize="10"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
                     </NavigationViewItem>
-                    <NavigationViewItem x:Name="FavoritePage" Content="喜欢" Tag="Favorite">
-                        <NavigationViewItem.Icon>
-                            <FontIcon Glyph="&#xEB51;"/>
-                        </NavigationViewItem.Icon>
+                    <NavigationViewItem x:Name="FavoritePage" 
+                                        Tag="Favorite"
+                                        Height="72"
+                                        MinHeight="72">
+                        <StackPanel Orientation="Vertical"
+                                    Margin="0 12 -12 12"
+                                    Spacing="8">
+                            <ic:FluentIcon x:Name="FavIcon" 
+                                           Icon="Heart"
+                                           FontSize="24"
+                                           HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="FavText" 
+                                       Text="喜欢"
+                                       FontWeight="Bold"
+                                       FontSize="10"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
                     </NavigationViewItem>
-                    <NavigationViewItem x:Name="LibraryPage" Content="音乐库" Tag="Library">
-                        <NavigationViewItem.Icon>
-                            <FontIcon Glyph="&#xE8F1;"/>
-                        </NavigationViewItem.Icon>
+                    <NavigationViewItem x:Name="LibraryPage"
+                                        Tag="Library"
+                                        Height="72"
+                                        MinHeight="72">
+                        <StackPanel Orientation="Vertical"
+                                    Margin="0 12 -12 12"
+                                    Spacing="8">
+                            <ic:FluentIcon x:Name="LibIcon" 
+                                           Icon="Library"
+                                           FontSize="24"
+                                           HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="LibText"
+                                       Text="音乐库"
+                                       FontWeight="Bold"
+                                       FontSize="10"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
                     </NavigationViewItem>
                     <NavigationViewItemSeparator/>
-                    <NavigationViewItem x:Uid="PlayQueuePage" Content="播放列表" Tag="PlayQueue">
-                        <NavigationViewItem.Icon>
-                            <FontIcon Glyph="&#xE90B;"/>
-                        </NavigationViewItem.Icon>
+                    <NavigationViewItem x:Name="PlayQueuePage"
+                                        Tag="PlayQueue"
+                                        Height="72"
+                                        MinHeight="72">
+                        <StackPanel Orientation="Vertical"
+                                    Margin="0 12 -12 12"
+                                    Spacing="8">
+                            <ic:FluentIcon x:Name="QueueIcon" 
+                                           Icon="MusicNote2Play"
+                                           FontSize="24"
+                                           HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="QueueText"
+                                       Text="播放列表"
+                                       FontWeight="Bold"
+                                       FontSize="10"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
                     </NavigationViewItem>
                 </NavigationView.MenuItems>
+                <NavigationView.FooterMenuItems>
+                    <NavigationViewItem x:Name="SettingsPage"
+                                        Tag="Settings"
+                                        Height="72"
+                                        MinHeight="72">
+                        <StackPanel Orientation="Vertical"
+                                    Margin="0 12 -12 12"
+                                    Spacing="8">
+                            <ic:FluentIcon x:Name="SetIcon" 
+                                           Icon="Settings"
+                                           FontSize="24"
+                                           HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="SetText"
+                                       Text="设置"
+                                       FontWeight="Bold"
+                                       FontSize="10"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
+                    </NavigationViewItem>
+                </NavigationView.FooterMenuItems>
                 <Frame x:Name="navFrame"/>
             </NavigationView>
         </Grid>

@@ -48,8 +48,10 @@ namespace Yee_Music.Models
         public bool UseFallbackMaterial { get; set; } = true;
         public string TintColor { get; set; } = "#00000000";
         public bool IsFirstRun { get; set; } = true;
+        public string UserName { get; set; } = "用户";
 
-        // 添加额外设置的字典，用于序列化
+        public string UserAvatarPath { get; set; } = "";
+
         [JsonExtensionData]
         public Dictionary<string, object> AdditionalSettings
         {
@@ -58,10 +60,15 @@ namespace Yee_Music.Models
         }
 
         [JsonConstructor]
+
+
+
         public AppSettings()
         {
             // 保持默认值
             IsFirstRun = true;
+            UserName = "用户";
+            UserAvatarPath = "";
             // 其他默认值...
             _additionalSettings = new Dictionary<string, object>();
         }

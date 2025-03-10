@@ -58,7 +58,7 @@
                 ShowEmptyState="{x:Bind ViewModel.IsQueueEmpty, Mode=OneWay}"
                 EmptyStateIcon="&#xE8FD;"
                 EmptyStateTitle="播放队列为空"
-                EmptyStateDescription="当前没有正在播放的歌曲"
+                EmptyStateDescription="空山不见人，但闻人语响"
                 PropertiesClick="MusicList_PropertiesClick"
                 ShowPlayMenuItem="True"
                 ShowAddToPlaylistMenuItem="False"

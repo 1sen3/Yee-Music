@@ -11,7 +11,14 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls">
 
     <Grid Padding="36">
-        <StackPanel Spacing="24">
+        <StackPanel Spacing="12">
+            <InfoBar
+                Severity="Warning"
+                IsOpen="True"
+                IsClosable="False"
+                Title="警告"
+                Message="当前版本切换主题可能存在问题,请使用跟随系统设置">
+            </InfoBar>
             <StackPanel Spacing="16">
                 <controls:SettingsExpander Header="应用主题"
                                            HeaderIcon="{ui:FontIcon Glyph=&#xE790;}">

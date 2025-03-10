@@ -20,7 +20,7 @@ namespace Yee_Music.Converters
                     // 偶数行有背景色，所以也应该有描边
                     if (index % 2 == 0)
                     {
-                        return new SolidColorBrush(Windows.UI.Color.FromArgb(80, 128, 128, 128)); // 半透明灰色描边
+                        return new SolidColorBrush(Windows.UI.Color.FromArgb(48, 128, 128, 128)); // 半透明灰色描边
                     }
                 }
             }

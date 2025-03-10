@@ -34,13 +34,13 @@ namespace Yee_Music.Pages
             switch (FavoriteSegmented.SelectedIndex)
             {
                 case 0:
-                    Settings_PivotFrame.Navigate(typeof(FavoriteSongsPage));
+                    Favorite_SegmentedFrame.Navigate(typeof(FavoriteSongsPage));
                     break;
                 case 1:
-                    Settings_PivotFrame.Navigate(typeof(Tips));
+                    Favorite_SegmentedFrame.Navigate(typeof(Tips));
                     break;
                 case 2:
-                    Settings_PivotFrame.Navigate(typeof(Tips));
+                    Favorite_SegmentedFrame.Navigate(typeof(Tips));
                     break;
             }
         }

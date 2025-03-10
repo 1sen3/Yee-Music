@@ -381,42 +381,6 @@ namespace Yee_Music.Models
 
                         // 触发位置更新事件
                         PositionChanged?.Invoke(position);
-                        //    // 即使暂停状态也更新位置（解决暂停状态下切换歌曲的问题）
-                        //    var position = _mediaPlayer.PlaybackSession.Position;
-                        //    var duration = _currentMusic?.Duration ?? TimeSpan.Zero;
-
-                        //    // 更新当前时间和进度
-                        //    _currentTime = position;
-                        //    _progress = position.TotalSeconds;
-
-                        //    // 触发位置更新事件
-                        //    PositionChanged?.Invoke(position);
-
-                        //    // 只有在播放状态下才检查歌曲结束
-                        //    if (_isPlaying)
-                        //    {
-                        //        // 降低检查频率：每秒最多检查一次结束状态
-                        //        var now = DateTime.Now;
-                        //        if ((now - _lastPositionCheckTime).TotalSeconds >= 1)
-                        //        {
-                        //            _lastPositionCheckTime = now;
-
-                        //            // 仅在必要时执行结束检查
-                        //            if (duration.TotalSeconds > 0 && position.TotalSeconds > 0)
-                        //            {
-                        //                // 修改：将检测阈值从1.0秒改为0.3秒，确保歌曲接近真正结束时才触发
-                        //                if (position.TotalSeconds >= duration.TotalSeconds - 0.3)
-                        //                {
-                        //                    Debug.WriteLine($"检测到歌曲接近结束：{position.TotalSeconds}/{duration.TotalSeconds}");
-
-                        //                    // 直接处理歌曲结束，不使用复杂的标记机制
-                        //                    HandleMediaEndedSimple();
-                        //                    return;
-                        //                }
-                        //            }
-                        //        }
-                        //    }
-                        //}
                     }
                 }
                 catch (Exception ex)
@@ -491,10 +455,9 @@ namespace Yee_Music.Models
                 // 停止当前播放
                 _mediaPlayer.Pause();
 
-                // 重要：重置播放位置
-                _mediaPlayer.Position = TimeSpan.Zero;
-                _progress = 0;
-                _currentTime = TimeSpan.Zero;
+                _mediaPlayer.Source = null;
+
+                await Task.Delay(50);
 
                 // 设置新的音乐
                 _currentMusic = music;
@@ -508,36 +471,22 @@ namespace Yee_Music.Models
 
                 try
                 {
-                    // 步骤1：停止当前播放并清除媒体源
-                    _mediaPlayer.Pause();
-                    _mediaPlayer.Source = null;
-
-                    // 步骤2：等待一小段时间确保清除生效
-                    await Task.Delay(50);
-
-                    // 步骤3：准备媒体源
                     var storageFile = await StorageFile.GetFileFromPathAsync(music.FilePath);
                     var mediaSource = MediaSource.CreateFromStorageFile(storageFile);
 
-                    // 步骤4：设置新媒体源
                     _mediaPlayer.Source = mediaSource;
 
-                    // 步骤5：确保从头开始播放 - 非常重要
-                    // 由于Source变更会重置PlaybackSession，我们等待新的PlaybackSession初始化
-                    await Task.Delay(100);
-                    if (_mediaPlayer.PlaybackSession != null)
-                    {
-                        _mediaPlayer.PlaybackSession.Position = TimeSpan.Zero;
-                        Debug.WriteLine("确保从头开始播放");
-                    }
+                    // 修复：强制更新进度条，确保UI显示正确的时间
+                    _currentTime = TimeSpan.Zero;
+                    _progress = 0;
+                    PositionChanged?.Invoke(TimeSpan.Zero);
 
-                    // 步骤6：开始播放
                     _mediaPlayer.Play();
                 }
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"设置媒体源或播放时出错: {ex.Message}");
-                    // 尝试恢复播放
+
                     try { _mediaPlayer.Play(); } catch { }
                 }
 
@@ -554,11 +503,6 @@ namespace Yee_Music.Models
                 {
                     _playQueueService.SetCurrentIndex(index);
                 }
-
-                // 修复：强制更新进度条，确保UI显示正确的时间
-                _currentTime = TimeSpan.Zero;
-                _progress = 0;
-                PositionChanged?.Invoke(TimeSpan.Zero);
 
                 // 确保定时器启动，解决从暂停状态切换歌曲的问题
                 if (!_positionTimer.IsEnabled)
@@ -613,42 +557,6 @@ namespace Yee_Music.Models
                 // 触发位置变更事件
                 PositionChanged?.Invoke(_currentTime);
             }
-            //try
-            //{
-            //    if (_mediaPlayer.Source == null)
-            //    {
-            //        _currentTime = TimeSpan.Zero;
-            //        _progress = 0;
-            //        PositionChanged?.Invoke(TimeSpan.Zero);
-            //        return;
-            //    }
-
-            //    // 获取当前播放位置
-            //    _currentTime = _mediaPlayer.PlaybackSession.Position;
-
-            //    // 计算进度百分比
-            //    if (_currentMusic != null && _currentMusic.Duration.TotalSeconds > 0)
-            //    {
-            //        _progress = _currentTime.TotalSeconds;
-            //    }
-            //    else
-            //    {
-            //        _progress = 0;
-            //    }
-
-            //    // 触发位置变更事件
-            //    PositionChanged?.Invoke(_currentTime);
-
-            //    // 修改：将检测阈值从0.5秒改为0.3秒
-            //    if (_currentMusic != null &&
-            //        _currentTime.TotalSeconds > 0 &&
-            //        _currentMusic.Duration.TotalSeconds > 0 &&
-            //        _currentTime.TotalSeconds >= _currentMusic.Duration.TotalSeconds - 0.3)
-            //    {
-            //        Debug.WriteLine("检测到歌曲即将结束，手动触发结束事件");
-            //        HandleMediaEndedSimple();
-            //    }
-            //}
             catch (Exception ex)
             {
                 Debug.WriteLine($"更新播放位置时出错: {ex.Message}");
@@ -760,27 +668,7 @@ namespace Yee_Music.Models
                     return false;
                 }
 
-                // 关键修复：在获取下一首歌之前，先强制重置当前播放位置和媒体源
-                if (_mediaPlayer != null)
-                {
-                    try
-                    {
-                        // 1. 暂停当前播放
-                        _mediaPlayer.Pause();
-
-                        // 2. 最彻底的方法是直接清除媒体源
-                        _mediaPlayer.Source = null;
-
-                        // 3. 等待一小段时间确保清除生效
-                        await Task.Delay(50);
-
-                        Debug.WriteLine("切换歌曲前完全重置播放器状态");
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"重置播放器状态时出错: {ex.Message}");
-                    }
-                }
+                _mediaPlayer.PlaybackSession.Position = TimeSpan.Zero;
 
                 // 获取下一首歌曲
                 MusicInfo nextMusic = null;
@@ -805,7 +693,6 @@ namespace Yee_Music.Models
                     return false;
                 }
 
-                // 播放下一首歌曲，确保从头开始播放
                 await PlayAsync(nextMusic);
 
                 return true;
@@ -855,13 +742,6 @@ namespace Yee_Music.Models
         {
             try
             {
-                // 先重置播放器状态
-                if (_mediaPlayer != null)
-                {
-                    _mediaPlayer.Pause();
-                    _mediaPlayer.Source = null;
-                    await Task.Delay(50);
-                }
 
                 // 获取随机歌曲
                 MusicInfo randomMusic = _playQueueService.GetRandom();

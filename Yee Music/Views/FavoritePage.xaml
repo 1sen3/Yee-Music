@@ -35,7 +35,7 @@
         </StackPanel>
         <Border Background="#40808080"
                 Grid.Row="1"/>
-        <Frame x:Name="Settings_PivotFrame"
+        <Frame x:Name="Favorite_SegmentedFrame"
                Grid.Row="2"/>
     </Grid>
 </Page>

@@ -44,6 +44,7 @@ namespace Yee_Music
         private ContentDialog _welcomeDialog;
         private string _selectedMusicLibraryPath;
         private int _welcomePageIndex = 0;
+        public MainWindowViewModel ViewModel { get; } = MainWindowViewModel.Instance;
         public MainWindow()
         {
             try
@@ -65,40 +66,48 @@ namespace Yee_Music
                 AppWindow.Resize(new Windows.Graphics.SizeInt32 { Width = 1366, Height = 768 });
                 AppWindow.Changed += AppWindow_Changed;
 
+                // 初始化ViewModel
+                ViewModel.Initialize(this, HWND);
 
                 // 加载设置
                 LoadAndApplySettings();
 
+
                 // 初始化UI设置
                 settings = new UISettings();
 
-                // 使用简单的占位内容
-                ShellFrame.Content = new ShellPage();
-                PlayerBarFrame.Content = new PlayerBarPage();
+                //// 使用简单的占位内容
+                //ShellFrame.Content = new ShellPage();
+                //PlayerBarFrame.Content = new PlayerBarPage();
 
-                // 初始化ViewModel - 这应该在内容加载前完成
-                MainWindowViewModel.Instance.Initialize(this, HWND);
+                // 初始化WelcomeControl并传递窗口句柄
+                WelcomeControl.Initialize(HWND);
 
+                // 订阅欢迎控件事件
+                WelcomeControl.SetupCompleted += (sender, path) => ViewModel.OnWelcomeCompleted(path);
+                WelcomeControl.SetupSkipped += (sender, args) => ViewModel.OnWelcomeSkipped();
 
-                // 如果需要显示欢迎对话框，延迟执行
-                if (MainWindowViewModel.Instance.ShouldShowWelcomeDialog())
+                // 如果不是首次运行，直接加载主内容
+                if (!ViewModel.ShouldShowWelcomeContent())
                 {
-                    DispatcherTimer welcomeTimer = new DispatcherTimer();
-                    welcomeTimer.Interval = TimeSpan.FromMilliseconds(2000);
-                    welcomeTimer.Tick += async (s, e) =>
-                    {
-                        welcomeTimer.Stop();
-                        try
-                        {
-                            await MainWindowViewModel.Instance.ShowWelcomeDialogAsync(this.Content.XamlRoot);
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"显示欢迎对话框时出错: {ex.Message}");
-                        }
-                    };
-                    welcomeTimer.Start();
+                    LoadMainContent();
                 }
+                else
+                {
+                    // 首次运行，开始欢迎流程
+                    ViewModel.StartWelcomeProcess();
+                }
+
+                WelcomeControl.SetupCompleted -= WelcomeControl_SetupCompleted;
+                WelcomeControl.SetupCompleted += WelcomeControl_SetupCompleted;
+
+                System.Diagnostics.Debug.WriteLine("MainWindow: 已订阅WelcomeControl.SetupCompleted事件");
+
+
+                // 订阅欢迎完成事件，加载主内容
+                ViewModel.WelcomeCompleted += (sender, path) => LoadMainContent();
+
+
 
                 System.Diagnostics.Debug.WriteLine("MainWindow 构造函数执行完成");
             }
@@ -107,6 +116,37 @@ namespace Yee_Music
                 System.Diagnostics.Debug.WriteLine($"MainWindow 初始化时出错: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"堆栈跟踪: {ex.StackTrace}");
             }
+        }
+        private void LoadMainContent()
+        {
+            // 加载ShellPage
+            ShellFrame.Navigate(typeof(ShellPage));
+
+            // 加载PlayerBarPage
+            PlayerBarFrame.Navigate(typeof(PlayerBarPage));
+        }
+        private void WelcomeControl_SetupCompleted(object sender, string path)
+        {
+            System.Diagnostics.Debug.WriteLine($"MainWindow: WelcomeControl_SetupCompleted被触发，路径: {path}");
+
+            // 确保在UI线程上执行
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                try
+                {
+                    // 隐藏欢迎控件
+                    WelcomeControl.Visibility = Visibility.Collapsed;
+
+                    // 显示主内容
+                    MainContentGrid.Visibility = Visibility.Visible;
+
+                    System.Diagnostics.Debug.WriteLine("MainWindow: 已切换到主界面");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"MainWindow: 切换到主界面时出错: {ex.Message}");
+                }
+            });
         }
         private static void AppWindow_Changed(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowChangedEventArgs args)
         {
