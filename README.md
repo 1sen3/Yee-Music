@@ -39,10 +39,10 @@
 4. 优化播放栏内歌曲名的显示效果
 ## 界面展示
 ![image](https://github.com/user-attachments/assets/263c354e-6288-41a8-ba27-ff39c82c0d57)
-![image](https://github.com/user-attachments/assets/f963b9e3-18c5-4ded-b66b-f7a5db8f5779)
-![image](https://github.com/user-attachments/assets/7e85e8f7-a8f6-45bd-914f-a1a7fc4ec3ff)
-![image](https://github.com/user-attachments/assets/7334dd04-91a8-4bd2-9ce5-be9c3430b205)
-![image](https://github.com/user-attachments/assets/0b55b773-58e5-49aa-9ef2-63d361017944)
+![image](https://github.com/user-attachments/assets/20c2f501-6ce7-4d7a-a597-d7389aba8000)
+![image](https://github.com/user-attachments/assets/7d30770a-e650-4b16-96d6-5b497b20c8b8)
+![image](https://github.com/user-attachments/assets/13156fc8-6f82-4647-a372-03b69816d12d)
+![image](https://github.com/user-attachments/assets/3dfe743f-bc55-4d2c-ba26-f82ceef458d6)
 
 ### 鸣谢
 - [Windows App SDK](https://github.com/microsoft/windowsappsdk)
